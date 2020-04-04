@@ -8,8 +8,8 @@ var map = {
     tsize: 16,
     layers: [],
     getTile: function (layer, col, row) {
-        if (!this.layers[layer][row * map.cols + col]) {
-            console.error(layer, col, row);
+        if (col < 0 || col > this.cols || row < 0 || row > this.rows) {
+            return;
         }
         return this.layers[layer][row * map.cols + col];
     },
@@ -19,7 +19,7 @@ var map = {
 const Gravity = {
     acceleration: 4*map.tsize,
     apply(delta, entity) {
-        if (entity.gravity) {
+        if (entity.velocity && !entity.photon) {
             entity.velocity.y += this.acceleration * delta;
         }
     }
@@ -28,7 +28,7 @@ const Gravity = {
 const Wind = {
     multiplier: 4,
     cutoff: 0.5,
-    max: map.tsize*8,
+    max: map.tsize*4,
     direction: {
         x: 0,
         y: -map.tsize*2
@@ -45,7 +45,7 @@ const Wind = {
         this.direction.y = this.applyBound(this.direction.y);
     },
     apply(delta, entity) {
-        if (entity.velocity) {
+        if (entity.velocity && !entity.photon) {
             const probability = Math.random();
             if (probability > this.cutoff) {
                 entity.velocity.x += delta * this.direction.x;
@@ -62,7 +62,7 @@ const AirResistance = {
         y: 1
     },
     apply(delta, entity) {
-        if (entity.velocity) {
+        if (entity.velocity && !entity.photon) {
             const velocityMeasure = Math.abs(entity.velocity.x) + Math.abs(entity.velocity.y);
             const coeff = velocityMeasure > this.soundSpeed ? 2 : 1;
             entity.velocity.x *= (1 - coeff * delta * this.viscosity.x);
@@ -90,7 +90,7 @@ const RandomDrift = {
     cutoff: 0.1,
     amount: 4 * map.tsize,
     apply(delta, entity) {
-        if (entity.velocity) {
+        if (entity.velocity && !entity.photon) {
             let probability = Math.random();
             if (probability > this.cutoff) {
                 entity.velocity.x += this.amount * delta * (Math.random() - 0.5)
@@ -103,7 +103,7 @@ const RandomDrift = {
     }
 }
 
-const MapBounds = {
+const Reaper = {
     toDelete: [],
     update(delta, entities) {
         for (let i = 0, len = this.toDelete.length; i < len; i++) {
@@ -112,7 +112,12 @@ const MapBounds = {
         this.toDelete.length = 0;
     },
     apply(delta, entity, index) {
-        if (entity.velocity && entity.position.y > map.rows * map.tsize) {
+        const lowerBound = entity.velocity && entity.position.y > map.rows * map.tsize;
+        const lostValue = entity.value < 1;
+        const upperBound = entity.position.y < 0;
+        const sunBound = (entity.position.x < 0 || entity.position.x > map.tsize * map.cols) && entity.photon
+            && entity.velocity.y < 0;
+        if (lowerBound || lostValue || upperBound || sunBound) {
             this.toDelete.push(index);
         }
     }
@@ -120,30 +125,145 @@ const MapBounds = {
 
 const SpriteDrawer = {
     canvas: undefined,
-    apply(delta, entity) {
+    context: undefined,
+    update(delta) {
         if (this.canvas) {
+
+        }
+    },
+    apply(delta, entity) {
+        if (this.context) {
 
         }
     }
 }
 
-const SYSTEMS = [Gravity, Wind, RandomDrift, AirResistance, Velocity, MapBounds, SpriteDrawer];
+function isCollision(rect1, rect2) {
+    if (rect1.x < rect2.x + rect2.width &&
+        rect1.x + rect1.width > rect2.x &&
+        rect1.y < rect2.y + rect2.height &&
+        rect1.y + rect1.height > rect2.y) {
+        return true;
+    }
+    return false;
+}
+
+const GroundCollision = {
+    processCollision(entity, tile) {
+        if (entity.velocity && entity.velocity.y > 0) {
+            entity.velocity.y = -entity.velocity.y;
+        }
+        if (entity.kind === "rain") {
+            if (tile.text < 9) {
+                const delta = Math.min(9 - tile.text, entity.value);
+                tile.text += delta;
+                entity.value -= delta;
+            }
+        } else if (entity.kind === "sun") {
+            if (tile.text > 0) {
+                const delta = Math.min(tile.text, entity.value);
+                tile.text -= delta;
+            }
+            entity.value = 0;
+        }
+    },
+    apply(delta, entity) {
+        if (entity.bounds) {
+            const center = {
+                x: entity.position.x + entity.bounds.centerX,
+                y: entity.position.y + entity.bounds.centerY,
+            };
+            const rect = {
+                x: center.x - entity.bounds.width / 2,
+                y: center.y - entity.bounds.height / 2,
+                width: entity.bounds.width,
+                height: entity.bounds.height
+            };
+            const tileCoordinates = {
+                x: Math.floor(center.x / map.tsize),
+                y: Math.floor(center.y / map.tsize)
+            };
+
+            for (let dx = -1; dx <= 1; dx++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                    const tileX = tileCoordinates.x + dx;
+                    const tileY = tileCoordinates.y + dy;
+                    const tile = map.getTile(0, tileX, tileY);
+                    if (tile && tile.kind === "ground") {
+                        const tileRect = {
+                            x: tileX*map.tsize,
+                            y: tileY*map.tsize,
+                            width: map.tsize,
+                            height: map.tsize,
+                        };
+                        if (isCollision(rect, tileRect)) {
+                            this.processCollision(entity, tile);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+const Sun = {
+    maxNormalAngle: 0.5,
+    normalAngle: 0.5,
+    step: 0.005,
+    cutoff: 0.99,
+    velocity: 8*map.tsize,
+    update(delta, entities) {
+        this.normalAngle -= this.step;
+        if (this.normalAngle < -Math.PI/2) {
+            this.normalAngle = Math.PI/2;
+        }
+        if (Math.abs(this.normalAngle) > this.maxNormalAngle) {
+            return;
+        }
+        for (let i = -map.cols, last = 2*map.cols; i < last; i++) {
+            const emit = Math.random() > this.cutoff;
+            if (emit) {
+                entities.push({
+                    kind: 'sun',
+                    position: {
+                        x: i * map.tsize,
+                        y: 0,
+                    },
+                    velocity: {
+                        x: this.velocity * Math.sin(this.normalAngle),
+                        y: this.velocity * Math.cos(this.normalAngle)
+                    },
+                    photon: true,
+                    bounds: {
+                        centerX: 8,
+                        centerY: 8,
+                        width: 2,
+                        height: 2,
+                    },
+                    value: Math.round(5 * Math.random() + 4)
+                });
+            }
+        }
+    },
+}
+
+const SYSTEMS = [Gravity, Wind, RandomDrift, AirResistance, Velocity, GroundCollision, Reaper, Sun, SpriteDrawer];
 
 function makeRow(layer, tile, cols) {
     for (let i = 0; i < cols; i++) {
-        layer.push(tile)
+        layer.push(Object.assign({}, tile))
     }
 }
 
 var groundRows = 20;
 function makeMap(cols, rows) {
     let layer = [];
-    makeRow(layer, { x: 3, y: 5, text: "S", color: "white" }, cols); // "sky"
+    makeRow(layer, { x: 3, y: 5, text: "S", color: "white", kind: "sky" }, cols); // "sky"
     for (let i = 1; i < rows - groundRows; i++) {
-        makeRow(layer, { x: 8, y: 1 }, cols)
+        makeRow(layer, { x: 8, y: 1, kind: "air" }, cols)
     }
     for (let i = rows - groundRows; i < rows; i++) {
-        makeRow(layer, { x: 1, y: 1, text: 0, color: "white" }, cols)
+        makeRow(layer, { x: 1, y: 1, text: 0, color: "white", kind: "ground" }, cols)
     }
     return layer;
 }
@@ -319,12 +439,11 @@ Game._drawResources = function() {
 
 Game.render = function () {
     // re-draw map if there has been scroll
-    if (this.hasScrolled) {
-        this._drawMap();
-    }
-
     if (map.resources.length > 0) {
         this._drawResources();
+        this._drawMap();
+    } else if (this.hasScrolled) {
+        this._drawMap();
     }
 
     // draw the map layers into game context
@@ -341,9 +460,9 @@ Game.cycleResources = function(sunProbability, rainProbability, cutoff) {
         let sun = sunProbability * Math.random();
         let rain = rainProbability * Math.random();
 
-        if (Math.max(sun, rain) > cutoff) {
+        if (rain > cutoff) {
             map.resources.push({
-                kind: sun > rain ? 'sun' : 'rain',
+                kind: 'rain',
                 position: {
                     x: i * map.tsize,
                     y: 1 * map.tsize,
@@ -351,6 +470,12 @@ Game.cycleResources = function(sunProbability, rainProbability, cutoff) {
                 velocity: {
                     x: 0,
                     y: 0
+                },
+                bounds: {
+                    centerX: 8,
+                    centerY: 8,
+                    width: 8,
+                    height: 8,
                 },
                 gravity: true,
                 value: Math.round(5 * Math.random() + 4)

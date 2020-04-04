@@ -13,8 +13,104 @@ var map = {
         }
         return this.layers[layer][row * map.cols + col];
     },
-    resources: []
+    resources: [] // entity
 };
+
+const Gravity = {
+    acceleration: 4*map.tsize,
+    apply(delta, entity) {
+        if (entity.gravity) {
+            entity.velocity.y += this.acceleration * delta;
+        }
+    }
+}
+
+const Wind = {
+    multiplier: 4,
+    cutoff: 0.7,
+    max: map.tsize*8,
+    direction: {
+        x: 0,
+        y: -map.tsize*2
+    },
+    applyBound(value) {
+        return value > 0 ? Math.min(value, this.max) : Math.max(value, -this.max);
+    },
+    update(delta) {
+        const angle = Math.random()*2*Math.PI;
+        const power = Math.random() * this.multiplier;
+        this.direction.x += power * Math.sin(angle);
+        this.direction.y -= power * Math.cos(angle);
+        this.direction.x = this.applyBound(this.direction.x);
+        this.direction.y = this.applyBound(this.direction.y);
+    },
+    apply(delta, entity) {
+        if (entity.velocity) {
+            const probability = Math.random();
+            if (probability > this.cutoff) {
+                entity.velocity.x += delta * this.direction.x;
+                entity.velocity.y += delta * this.direction.y;
+            }
+        }
+    }
+}
+
+const AirResistance = {
+    soundSpeed: 8 * map.tsize,
+    viscosity: {
+        x: 0.1,
+        y: 0.2
+    },
+    apply(delta, entity) {
+        if (entity.velocity) {
+            const velocityMeasure = Math.abs(entity.velocity.x) + Math.abs(entity.velocity.y);
+            const coeff = velocityMeasure > this.soundSpeed ? 2 : 1;
+            entity.velocity.x *= (1 - coeff * this.viscosity.x);
+            entity.velocity.y *= (1 - coeff * this.viscosity.y);
+            if (Math.abs(entity.velocity.x) < 1) {
+                entity.velocity.x = 0;
+            }
+            if (Math.abs(entity.velocity.y) < 1) {
+                entity.velocity.y = 0;
+            }
+        }
+    }
+}
+
+const Velocity = {
+    apply(delta, entity) {
+        if (entity.velocity) {
+            entity.position.x = Math.round(entity.position.x + delta * entity.velocity.x);
+            entity.position.y = Math.round(entity.position.y + delta * entity.velocity.y);
+        }
+    }
+}
+
+const MapBounds = {
+    toDelete: [],
+    update(delta, entities) {
+        for (let i = 0, len = this.toDelete.length; i < len; i++) {
+            entities.splice(this.toDelete[i]-i, 1);
+        }
+        this.toDelete.length = 0;
+    },
+    apply(delta, entity, index) {
+        if (entity.velocity && entity.position.y > map.rows * map.tsize) {
+            this.toDelete.push(index);
+        }
+    }
+}
+
+const SpriteDrawer = {
+    canvas: undefined,
+    apply(delta, entity) {
+        if (this.canvas) {
+
+        }
+    }
+}
+
+const SYSTEMS = [Gravity, Wind, AirResistance, Velocity, MapBounds, SpriteDrawer];
 
 function makeRow(layer, tile, cols) {
     for (let i = 0; i < cols; i++) {
@@ -86,27 +182,20 @@ Game.init = function () {
 
     this.resourceCanvas = newCanvasLayer();
 
+    this.systemsApply = [];
+    this.systemsUpdate = [];
+    for (let s of SYSTEMS) {
+        if (s.update) {
+            this.systemsUpdate.push(s);
+        }
+        if (s.apply) {
+            this.systemsApply.push(s);
+        }
+    }
+
     // initial draw of the map
     this._drawMap();
 };
-
-function moveResources(delta) {
-    const toDelete = [];
-    for (let i = 0; i < map.resources.length; i++) {
-        map.resources[i].y = Math.round(map.resources[i].y + delta * GRAVITY * (0.5 * Math.random()));
-        if (map.resources.y > map.rows * map.tsize) {
-            toDelete.push(i);
-        } else {
-            const drift = Math.random() - 0.5;
-            if (Math.abs(drift) > 0.2) {
-                map.resources[i].x += Math.sign(drift)
-            }
-        }
-    }
-    for (let i = 0; i < toDelete.length; i++) {
-        map.resources.splice(toDelete[i]-i, 1);
-    }
-}
 
 Game.update = function (delta) {
     this.hasScrolled = false;
@@ -123,7 +212,19 @@ Game.update = function (delta) {
         this.hasScrolled = true;
     }
 
-    moveResources(delta)
+    for (let i = 0, len = this.systemsUpdate.length; i < len; i++) {
+        const system = this.systemsUpdate[i];
+        if (system.update) {
+            system.update(delta, map.resources);
+        }
+    }
+
+    for (let e = 0, entityLen = map.resources.length; e < entityLen; e++) {
+        const entity = map.resources[e];
+        for (let s = 0, systemLen = this.systemsApply.length; s < systemLen; s++) {
+            this.systemsApply[s].apply(delta, entity, e);
+        }
+    }
 };
 
 Game._drawMap = function () {
@@ -187,8 +288,8 @@ Game._drawResources = function() {
     let lastColor = undefined;
     for (let i = 0; i < map.resources.length; i++) {
         let resource = map.resources[i];
-        const x = resource.x - this.camera.x;
-        const y = resource.y - this.camera.y;
+        const x = resource.position.x - this.camera.x;
+        const y = resource.position.y - this.camera.y;
         const image = resource.kind === 'sun' ? this.sun : this.rain;
         const color = resource.kind === 'sun' ? 'black' : 'white';
         if (lastColor != color) {
@@ -226,8 +327,15 @@ Game.cycleResources = function(sunProbability, rainProbability, cutoff) {
         if (Math.max(sun, rain) > cutoff) {
             map.resources.push({
                 kind: sun > rain ? 'sun' : 'rain',
-                x: i * map.tsize,
-                y: 1 * map.tsize,
+                position: {
+                    x: i * map.tsize,
+                    y: 1 * map.tsize,
+                },
+                velocity: {
+                    x: 0,
+                    y: 0
+                },
+                gravity: true,
                 value: Math.round(5 * Math.random() + 4)
             });
         }

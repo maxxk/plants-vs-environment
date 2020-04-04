@@ -77,7 +77,8 @@ Keyboard.isDown = function (keyCode) {
 // Game object
 //
 
-var Game = {};
+var Game = {
+};
 
 Game.run = function (context) {
     this.ctx = context;
@@ -93,13 +94,17 @@ Game.run = function (context) {
 Game.tick = function (elapsed) {
     window.requestAnimationFrame(this.tick);
 
-    // clear previous frame
-    this.ctx.clearRect(0, 0, 512, 512);
-
     // compute delta time in seconds -- also cap it
     var delta = (elapsed - this._previousElapsed) / 1000.0;
+    if (delta < 0.05) {
+        return;
+    }
+
     delta = Math.min(delta, 0.25); // maximum delta of 250 ms
     this._previousElapsed = elapsed;
+
+    // clear previous frame
+    this.ctx.clearRect(0, 0, 512, 512);
 
     this.update(delta);
     this.render();

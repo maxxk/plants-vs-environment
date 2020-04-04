@@ -1,38 +1,51 @@
 var map = {
-    cols: 12,
-    rows: 12,
-    tsize: 64,
-    layers: [[
-        3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-        3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3,
-        3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3,
-        3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3,
-        3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3,
-        3, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 3,
-        3, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 3,
-        3, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 3,
-        3, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 3,
-        3, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 3,
-        3, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 3,
-        3, 3, 3, 1, 1, 2, 3, 3, 3, 3, 3, 3
-    ], [
-        4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4,
-        4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4,
-        4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4,
-        4, 0, 0, 5, 0, 0, 0, 0, 0, 5, 0, 4,
-        4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4,
-        4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4,
-        4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4,
-        4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4,
-        4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4,
-        4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4,
-        4, 4, 4, 0, 5, 4, 4, 4, 4, 4, 4, 4,
-        4, 4, 4, 0, 0, 3, 3, 3, 3, 3, 3, 3
-    ]],
+    cols: 64,
+    rows: 48,
+    tsize: 16,
+    layers: [],
     getTile: function (layer, col, row) {
+        if (!this.layers[layer][row * map.cols + col]) {
+            console.error(layer, col, row);
+        }
         return this.layers[layer][row * map.cols + col];
     }
 };
+
+function makeRow(layer, tile, cols) {
+    for (let i = 0; i < cols; i++) {
+        layer.push(tile)
+    }
+}
+
+var groundRows = 20;
+function makeMap(cols, rows) {
+    let layer = [];
+    makeRow(layer, { x: 3, y: 5 }, cols); // "sky"
+    for (let i = 1; i < rows - groundRows; i++) {
+        makeRow(layer, { x: 8, y: 1 }, cols)
+    }
+    for (let i = rows - groundRows; i < rows; i++) {
+        makeRow(layer, { x: 1, y: 1 }, cols)
+    }
+    return layer;
+}
+
+map.layers.push(makeMap(map.cols, map.rows));
+
+function makeGround(cols, rows) {
+    let layer = [];
+    makeRow(layer, { text: "S", color: 'white' }, cols); // "sky"
+    for (let i = 1; i < rows - groundRows; i++) {
+        makeRow(layer, {} , cols)
+    }
+    for (let i = rows - groundRows; i < rows; i++) {
+        makeRow(layer, { text: 0, color: 'white' }, cols)
+    }
+    return layer;
+}
+
+map.layers.push(makeGround(map.cols, map.rows))
+
 
 function Camera(map, width, height) {
     this.x = 0;
@@ -56,7 +69,7 @@ Camera.prototype.move = function (delta, dirx, diry) {
 
 Game.load = function () {
     return [
-        Loader.loadImage('tiles', '../assets/tiles.png'),
+        Loader.loadImage('tiles', '../assets/bloo.png'),
     ];
 };
 
@@ -103,6 +116,8 @@ Game._drawMap = function () {
 Game._drawLayer = function (layer) {
     var context = this.layerCanvas[layer].getContext('2d');
     context.clearRect(0, 0, 512, 512);
+    context.font = '10px serif';
+    let lastColor = undefined;
 
     var startCol = Math.floor(this.camera.x / map.tsize);
     var endCol = startCol + (this.camera.width / map.tsize);
@@ -116,18 +131,26 @@ Game._drawLayer = function (layer) {
             var tile = map.getTile(layer, c, r);
             var x = (c - startCol) * map.tsize + offsetX;
             var y = (r - startRow) * map.tsize + offsetY;
-            if (tile !== 0) { // 0 => empty tile
-                context.drawImage(
-                    this.tileAtlas, // image
-                    (tile - 1) * map.tsize, // source x
-                    0, // source y
-                    map.tsize, // source width
-                    map.tsize, // source height
-                    Math.round(x),  // target x
-                    Math.round(y), // target y
-                    map.tsize, // target width
-                    map.tsize // target height
-                );
+            if (tile) {
+                if (tile.x) {
+                    context.drawImage(
+                        this.tileAtlas, // image
+                        tile.x * map.tsize, // source x
+                        tile.y * map.tsize, // source y
+                        map.tsize, // source width
+                        map.tsize, // source height
+                        Math.round(x),  // target x
+                        Math.round(y), // target y
+                        map.tsize, // target width
+                        map.tsize // target height
+                    );
+                } else if (typeof tile.text !== "undefined") {
+                    if (tile.color && tile.color !== lastColor) {
+                        lastColor = tile.color;
+                        context.fillStyle = lastColor;
+                    }
+                    context.fillText(tile.text, Math.round(x) + map.tsize/2, Math.round(y) + map.tsize/2)
+                }
             }
         }
     }

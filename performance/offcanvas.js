@@ -27,7 +27,7 @@ const Gravity = {
 
 const Wind = {
     multiplier: 4,
-    cutoff: 0.7,
+    cutoff: 0.5,
     max: map.tsize*8,
     direction: {
         x: 0,
@@ -59,14 +59,14 @@ const AirResistance = {
     soundSpeed: 8 * map.tsize,
     viscosity: {
         x: 0.1,
-        y: 0.2
+        y: 1
     },
     apply(delta, entity) {
         if (entity.velocity) {
             const velocityMeasure = Math.abs(entity.velocity.x) + Math.abs(entity.velocity.y);
             const coeff = velocityMeasure > this.soundSpeed ? 2 : 1;
-            entity.velocity.x *= (1 - coeff * this.viscosity.x);
-            entity.velocity.y *= (1 - coeff * this.viscosity.y);
+            entity.velocity.x *= (1 - coeff * delta * this.viscosity.x);
+            entity.velocity.y *= (1 - coeff * delta * this.viscosity.y);
             if (Math.abs(entity.velocity.x) < 1) {
                 entity.velocity.x = 0;
             }
@@ -82,6 +82,23 @@ const Velocity = {
         if (entity.velocity) {
             entity.position.x = Math.round(entity.position.x + delta * entity.velocity.x);
             entity.position.y = Math.round(entity.position.y + delta * entity.velocity.y);
+        }
+    }
+}
+
+const RandomDrift = {
+    cutoff: 0.1,
+    amount: 4 * map.tsize,
+    apply(delta, entity) {
+        if (entity.velocity) {
+            let probability = Math.random();
+            if (probability > this.cutoff) {
+                entity.velocity.x += this.amount * delta * (Math.random() - 0.5)
+            }
+            probability = Math.random();
+            if (probability > this.cutoff) {
+                entity.velocity.y += this.amount * delta * (Math.random() - 0.5)
+            }
         }
     }
 }
@@ -110,7 +127,7 @@ const SpriteDrawer = {
     }
 }
 
-const SYSTEMS = [Gravity, Wind, AirResistance, Velocity, MapBounds, SpriteDrawer];
+const SYSTEMS = [Gravity, Wind, RandomDrift, AirResistance, Velocity, MapBounds, SpriteDrawer];
 
 function makeRow(layer, tile, cols) {
     for (let i = 0; i < cols; i++) {

@@ -20,31 +20,17 @@ function makeRow(layer, tile, cols) {
 var groundRows = 20;
 function makeMap(cols, rows) {
     let layer = [];
-    makeRow(layer, { x: 3, y: 5 }, cols); // "sky"
+    makeRow(layer, { x: 3, y: 5, text: "S", color: "white" }, cols); // "sky"
     for (let i = 1; i < rows - groundRows; i++) {
         makeRow(layer, { x: 8, y: 1 }, cols)
     }
     for (let i = rows - groundRows; i < rows; i++) {
-        makeRow(layer, { x: 1, y: 1 }, cols)
+        makeRow(layer, { x: 1, y: 1, text: 0, color: "white" }, cols)
     }
     return layer;
 }
 
 map.layers.push(makeMap(map.cols, map.rows));
-
-function makeGround(cols, rows) {
-    let layer = [];
-    makeRow(layer, { text: "S", color: 'white' }, cols); // "sky"
-    for (let i = 1; i < rows - groundRows; i++) {
-        makeRow(layer, {} , cols)
-    }
-    for (let i = rows - groundRows; i < rows; i++) {
-        makeRow(layer, { text: 0, color: 'white' }, cols)
-    }
-    return layer;
-}
-
-map.layers.push(makeGround(map.cols, map.rows))
 
 
 function Camera(map, width, height) {
@@ -144,12 +130,13 @@ Game._drawLayer = function (layer) {
                         map.tsize, // target width
                         map.tsize // target height
                     );
-                } else if (typeof tile.text !== "undefined") {
+                } 
+                if (typeof tile.text !== "undefined") {
                     if (tile.color && tile.color !== lastColor) {
                         lastColor = tile.color;
                         context.fillStyle = lastColor;
                     }
-                    context.fillText(tile.text, Math.round(x) + map.tsize/2, Math.round(y) + map.tsize/2)
+                    context.fillText(tile.text, Math.round(x) + map.tsize/4, Math.round(y) + map.tsize/2)
                 }
             }
         }
@@ -164,5 +151,5 @@ Game.render = function () {
 
     // draw the map layers into game context
     this.ctx.drawImage(this.layerCanvas[0], 0, 0);
-    this.ctx.drawImage(this.layerCanvas[1], 0, 0);
+    //this.ctx.drawImage(this.layerCanvas[1], 0, 0);
 };

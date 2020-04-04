@@ -1,3 +1,7 @@
+const WIDTH = 512;
+const HEIGHT = 512;
+const GRAVITY = 64;
+
 var map = {
     cols: 64,
     rows: 48,
@@ -8,7 +12,8 @@ var map = {
             console.error(layer, col, row);
         }
         return this.layers[layer][row * map.cols + col];
-    }
+    },
+    resources: []
 };
 
 function makeRow(layer, tile, cols) {
@@ -56,26 +61,52 @@ Camera.prototype.move = function (delta, dirx, diry) {
 Game.load = function () {
     return [
         Loader.loadImage('tiles', '../assets/bloo.png'),
+        Loader.loadImage('rain', '../assets/orb-blue.png'),
+        Loader.loadImage('sun', '../assets/orb-yellow.png')
     ];
 };
+
+function newCanvasLayer() {
+    var c = document.createElement('canvas');
+    c.width = WIDTH;
+    c.height = HEIGHT;
+    return c;
+}
 
 Game.init = function () {
     Keyboard.listenForEvents(
         [Keyboard.LEFT, Keyboard.RIGHT, Keyboard.UP, Keyboard.DOWN]);
     this.tileAtlas = Loader.getImage('tiles');
-    this.camera = new Camera(map, 512, 512);
+    this.sun = Loader.getImage('sun');
+    this.rain = Loader.getImage('rain');
+    this.camera = new Camera(map, WIDTH, HEIGHT);
 
     // create a canvas for each layer
-    this.layerCanvas = map.layers.map(function () {
-        var c = document.createElement('canvas');
-        c.width = 512;
-        c.height = 512;
-        return c;
-    });
+    this.layerCanvas = map.layers.map(newCanvasLayer);
+
+    this.resourceCanvas = newCanvasLayer();
 
     // initial draw of the map
     this._drawMap();
 };
+
+function moveResources(delta) {
+    const toDelete = [];
+    for (let i = 0; i < map.resources.length; i++) {
+        map.resources[i].y = Math.round(map.resources[i].y + delta * GRAVITY * (0.5 * Math.random()));
+        if (map.resources.y > map.rows * map.tsize) {
+            toDelete.push(i);
+        } else {
+            const drift = Math.random() - 0.5;
+            if (Math.abs(drift) > 0.2) {
+                map.resources[i].x += Math.sign(drift)
+            }
+        }
+    }
+    for (let i = 0; i < toDelete.length; i++) {
+        map.resources.splice(toDelete[i]-i, 1);
+    }
+}
 
 Game.update = function (delta) {
     this.hasScrolled = false;
@@ -91,6 +122,8 @@ Game.update = function (delta) {
         this.camera.move(delta, dirx, diry);
         this.hasScrolled = true;
     }
+
+    moveResources(delta)
 };
 
 Game._drawMap = function () {
@@ -101,7 +134,7 @@ Game._drawMap = function () {
 
 Game._drawLayer = function (layer) {
     var context = this.layerCanvas[layer].getContext('2d');
-    context.clearRect(0, 0, 512, 512);
+    context.clearRect(0, 0, WIDTH, HEIGHT);
     context.font = '10px serif';
     let lastColor = undefined;
 
@@ -143,13 +176,60 @@ Game._drawLayer = function (layer) {
     }
 };
 
+function isVisible(camera, x, y, width, height) {
+    return x + width >= camera.x && x < camera.maxX && y+height >= camera.y && y < camera.maxY
+}
+
+Game._drawResources = function() {
+    const context = this.resourceCanvas.getContext('2d');
+    context.clearRect(0, 0, WIDTH, HEIGHT);
+    context.font = '8px serif bold';
+    let lastColor = undefined;
+    for (let i = 0; i < map.resources.length; i++) {
+        let resource = map.resources[i];
+        const x = resource.x - this.camera.x;
+        const y = resource.y - this.camera.y;
+        const image = resource.kind === 'sun' ? this.sun : this.rain;
+        const color = resource.kind === 'sun' ? 'black' : 'white';
+        if (lastColor != color) {
+            context.fillStyle = color;
+        }
+        context.drawImage(image, x, y);
+        context.fillText(resource.value, x + map.tsize/4, y + map.tsize*3/4);
+    }
+}
+
 Game.render = function () {
     // re-draw map if there has been scroll
     if (this.hasScrolled) {
         this._drawMap();
     }
 
+    if (map.resources.length > 0) {
+        this._drawResources();
+    }
+
     // draw the map layers into game context
     this.ctx.drawImage(this.layerCanvas[0], 0, 0);
+    this.ctx.drawImage(this.resourceCanvas, 0, 0)
     //this.ctx.drawImage(this.layerCanvas[1], 0, 0);
 };
+
+Game.cycleResources = function(sunProbability, rainProbability, cutoff) {
+    sunProbability = sunProbability || 1;
+    rainProbability = rainProbability || 1;
+    cutoff = cutoff || 0.75;
+    for (let i = 0; i < map.cols; i++) {
+        let sun = sunProbability * Math.random();
+        let rain = rainProbability * Math.random();
+
+        if (Math.max(sun, rain) > cutoff) {
+            map.resources.push({
+                kind: sun > rain ? 'sun' : 'rain',
+                x: i * map.tsize,
+                y: 1 * map.tsize,
+                value: Math.round(5 * Math.random() + 4)
+            });
+        }
+    }
+}

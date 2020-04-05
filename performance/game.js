@@ -134,12 +134,12 @@ Game._drawLayer = function (layer) {
                         map.tsize // target height
                     );
                 } 
-                if (tile.text) {
+                if (tile.value) {
                     if (tile.color && tile.color !== lastColor) {
                         lastColor = tile.color;
                         context.fillStyle = lastColor;
                     }
-                    context.fillText(tile.text, Math.round(x) + map.tsize/4, Math.round(y) + map.tsize/2)
+                    context.fillText(tile.value, Math.round(x) + map.tsize/4, Math.round(y) + map.tsize/2)
                 }
             }
         }

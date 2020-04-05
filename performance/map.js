@@ -21,12 +21,12 @@ function makeRow(layer, tile, cols) {
 
 function makeMap(cols, rows) {
     let layer = [];
-    makeRow(layer, { x: 3, y: 5, text: "S", color: "white", kind: "sky" }, cols); // "sky"
+    makeRow(layer, { x: 3, y: 5, color: "white", kind: "sky" }, cols); // "sky"
     for (let i = 1; i < rows - map.groundRows; i++) {
         makeRow(layer, { x: 8, y: 1, kind: "air" }, cols)
     }
     for (let i = rows - map.groundRows; i < rows; i++) {
-        makeRow(layer, { x: 1, y: 1, text: 0, color: "white", kind: "ground" }, cols)
+        makeRow(layer, { x: 1, y: 1, value: 0, color: "white", kind: "ground" }, cols)
     }
     return layer;
 }

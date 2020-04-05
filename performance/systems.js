@@ -138,15 +138,15 @@ const GroundCollision = {
             entity.velocity.y = -entity.velocity.y;
         }
         if (entity.kind === "rain") {
-            if (tile.text < 9) {
-                const delta = Math.min(9 - tile.text, entity.value);
-                tile.text += delta;
+            if (tile.value < 9) {
+                const delta = Math.min(9 - tile.value, entity.value);
+                tile.value += delta;
                 entity.value -= delta;
             }
         } else if (entity.kind === "sun") {
-            if (tile.text > 0) {
-                const delta = Math.min(tile.text, entity.value);
-                tile.text -= delta;
+            if (tile.value > 0) {
+                const delta = Math.min(tile.value, entity.value);
+                tile.value -= delta;
             }
             entity.value = 0;
         }

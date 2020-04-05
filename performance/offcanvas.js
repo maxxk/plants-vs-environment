@@ -402,7 +402,7 @@ Game._drawLayer = function (layer) {
                         map.tsize // target height
                     );
                 } 
-                if (typeof tile.text !== "undefined") {
+                if (tile.text) {
                     if (tile.color && tile.color !== lastColor) {
                         lastColor = tile.color;
                         context.fillStyle = lastColor;
@@ -433,7 +433,9 @@ Game._drawResources = function() {
             context.fillStyle = color;
         }
         context.drawImage(image, x, y);
-        context.fillText(resource.value, x + map.tsize/4, y + map.tsize*3/4);
+        if (resource.value) {
+            context.fillText(resource.value, x + map.tsize/4, y + map.tsize*3/4);
+        }
     }
 }
 

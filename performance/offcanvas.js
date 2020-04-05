@@ -348,6 +348,8 @@ Game.update = function (delta) {
         this.hasScrolled = true;
     }
 
+    if (this.pause) { return; }
+
     for (let i = 0, len = this.systemsUpdate.length; i < len; i++) {
         const system = this.systemsUpdate[i];
         if (system.update) {
@@ -438,12 +440,10 @@ Game._drawResources = function() {
     }
 }
 
-Game.render = function () {
+Game.render = function (force) {
     // re-draw map if there has been scroll
-    if (map.resources.length > 0) {
+    if (this.hasScrolled || force || !this.pause && map.resources.length > 0) {
         this._drawResources();
-        this._drawMap();
-    } else if (this.hasScrolled) {
         this._drawMap();
     }
 
@@ -453,12 +453,10 @@ Game.render = function () {
     //this.ctx.drawImage(this.layerCanvas[1], 0, 0);
 };
 
-Game.cycleResources = function(sunProbability, rainProbability, cutoff) {
-    sunProbability = sunProbability || 1;
+Game.cycleResources = function(rainProbability, cutoff) {
     rainProbability = rainProbability || 1;
     cutoff = cutoff || 0.75;
     for (let i = 0; i < map.cols; i++) {
-        let sun = sunProbability * Math.random();
         let rain = rainProbability * Math.random();
 
         if (rain > cutoff) {
@@ -483,4 +481,9 @@ Game.cycleResources = function(sunProbability, rainProbability, cutoff) {
             });
         }
     }
+    this.render(true)
+}
+
+Game.setPause = function(checkbox) {
+    this.pause = checkbox.checked;
 }

@@ -236,13 +236,14 @@ const PairwiseCollision = {
 
         if (delta > 0 && rain.value > 0) {
             const bounce = {
-                x: rain.position.x - sun.position.x,
-                y: rain.position.y - sun.position.y
+                x: rain.position.x - sun.position.x + sun.velocity.x,
+                y: rain.position.y - sun.position.y + sun.velocity.y,
             };
+            const sunMeasure = Math.abs(sun.velocity.x) + Math.abs(sun.velocity.y);
             const measure = Math.abs(bounce.x) + Math.abs(bounce.y);
             const acceleration = {
-                x: bounce.x * this.acceleration * delta * time / measure,
-                y: bounce.y * this.acceleration * delta * time / measure,
+                x: bounce.x * this.acceleration * delta * time * sunMeasure / measure / measure,
+                y: bounce.y * this.acceleration * delta * time * sunMeasure / measure / measure,
             };
             rain.velocity.x += acceleration.x;
             rain.velocity.y += acceleration.y;

@@ -1,3 +1,6 @@
+const WIDTH = 512;
+const HEIGHT = 512;
+
 function Camera(map, width, height) {
     this.x = 0;
     this.y = 0;

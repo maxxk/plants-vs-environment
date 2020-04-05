@@ -272,4 +272,100 @@ const Sun = {
     },
 }
 
-const SYSTEMS = [Gravity, Wind, RandomDrift, AirResistance, Velocity, PairwiseCollision, GroundCollision, Reaper, Sun ];
+function canSoak(tile) {
+    return tile && tile.kind === "ground" && tile.value < 9
+}
+
+function canLeak(tile) {
+    return tile && tile.kind === "ground" && tile.value > 0
+}
+
+const GroundSoak = {
+    primeStep: 313,
+    stepShift: 0,
+    bottomLeak: 1,
+    cutoff: 0.5,
+    multiplier: 2,
+    lastRowLeak(map) {
+        const row = map.rows - 1;
+        for (let col = 0; col < map.cols; col++) {
+            const tile = map.getTile(0, col, row);
+            if (!tile || !tile.value || tile.kind !== "ground") {
+                continue;
+            }
+            if (Math.random() < this.cutoff) {
+                continue;
+            }
+            tile.value -= this.bottomLeak;
+        }
+    },
+    transferPart(from, to, divisor) {
+        if (canLeak(from)
+            && to.value < 9
+            && Math.random() < this.cutoff) {
+            const delta = Math.ceil(from.value / divisor);
+            from.value -= delta;
+            to.value += delta;
+            return true;
+        }
+        return false;
+    },
+    transferOne(from, to) {
+        if (canLeak(from) 
+            && to.value < from.value 
+            && from.value > 1 
+            && Math.random() < this.cutoff) {
+            to.value += 1;
+            from.value -= 1;
+            return true;
+        }
+        return false;
+    },
+    gravitySoak(tile, col, row, map) {
+        const north = map.getTile(0, col, row-1);
+        const northeast = map.getTile(0, col-1, row-1);
+        const northwest = map.getTile(0, col+1, row-1);
+        this.transferPart(north, tile, 2) 
+            || this.transferPart(northeast, tile, 3)
+            || this.transferPart(northwest, tile, 3);
+    },
+    capillarSoak(tile, col, row, map) {
+        const west = map.getTile(0, col+1, row);
+        const east = map.getTile(0, col-1, row);
+        const south = map.getTile(0, col, row-1);
+
+        this.transferOne(west, tile)
+            || this.transferOne(east, tile)
+            || this.transferOne(south, tile);
+    },
+    update(delta) {
+        this.current += delta;
+        if (this.current < this.period) {
+            return;
+        }
+        this.current = 0;
+        
+        this.lastRowLeak(map);
+
+        let i = (map.rows - 1)*map.cols + this.stepShift;
+        while (i >= 0) {
+            const row = i % map.cols;
+            const col = (i / map.cols) | 0; // integer division
+            const tile = map.getTile(0, col, row);
+            if (canSoak(tile)) {
+                this.gravitySoak(tile, col, row, map);
+                if (canSoak(tile)) {
+                    this.capillarSoak(tile, col, row, map);
+                }
+            }
+            i -= this.primeStep;
+        }
+        this.stepShift = i;
+    }
+}
+
+const SYSTEMS = [
+    Gravity, Wind, RandomDrift,
+    AirResistance, Velocity,
+    GroundSoak, PairwiseCollision, GroundCollision,
+    Reaper, Sun ];

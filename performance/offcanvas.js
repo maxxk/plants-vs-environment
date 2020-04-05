@@ -123,21 +123,6 @@ const Reaper = {
     }
 }
 
-const SpriteDrawer = {
-    canvas: undefined,
-    context: undefined,
-    update(delta) {
-        if (this.canvas) {
-
-        }
-    },
-    apply(delta, entity) {
-        if (this.context) {
-
-        }
-    }
-}
-
 function isCollision(rect1, rect2) {
     if (rect1.x < rect2.x + rect2.width &&
         rect1.x + rect1.width > rect2.x &&
@@ -305,7 +290,7 @@ const Sun = {
     },
 }
 
-const SYSTEMS = [Gravity, Wind, RandomDrift, AirResistance, Velocity, PairwiseCollision, GroundCollision, Reaper, Sun, SpriteDrawer];
+const SYSTEMS = [Gravity, Wind, RandomDrift, AirResistance, Velocity, PairwiseCollision, GroundCollision, Reaper, Sun ];
 
 function makeRow(layer, tile, cols) {
     for (let i = 0; i < cols; i++) {

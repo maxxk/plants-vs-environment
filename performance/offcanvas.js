@@ -148,6 +148,23 @@ function isCollision(rect1, rect2) {
     return false;
 }
 
+function entityCenter(entity) {
+    return {
+        x: entity.position.x + entity.bounds.centerX,
+        y: entity.position.y + entity.bounds.centerY,
+    };
+}
+
+function entityRect(entity) {
+    const center = entityCenter(entity);
+    return {
+        x: center.x - entity.bounds.width / 2,
+        y: center.y - entity.bounds.height / 2,
+        width: entity.bounds.width,
+        height: entity.bounds.height
+    }
+}
+
 const GroundCollision = {
     processCollision(entity, tile) {
         if (entity.velocity && entity.velocity.y > 0) {
@@ -169,16 +186,8 @@ const GroundCollision = {
     },
     apply(delta, entity) {
         if (entity.bounds) {
-            const center = {
-                x: entity.position.x + entity.bounds.centerX,
-                y: entity.position.y + entity.bounds.centerY,
-            };
-            const rect = {
-                x: center.x - entity.bounds.width / 2,
-                y: center.y - entity.bounds.height / 2,
-                width: entity.bounds.width,
-                height: entity.bounds.height
-            };
+            const center = entityCenter(entity);
+            const rect = entityRect(entity);
             const tileCoordinates = {
                 x: Math.floor(center.x / map.tsize),
                 y: Math.floor(center.y / map.tsize)
@@ -201,6 +210,55 @@ const GroundCollision = {
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+const PairwiseCollision = {
+    multiplier: 2,
+    acceleration: 16 * map.tsize,
+    processCollision(time, e1, e2) {
+        let sun, rain;
+        if (e1.kind == 'sun' && e2.kind == 'rain') {
+            sun = e1;
+            rain = e2;
+        } else if (e1.kind == 'rain' && e2.kind == 'sun') {
+            sun = e2;
+            rain = e1;
+        } else {
+            return;
+        }
+
+        const delta = Math.round(Math.min(sun.value, rain.value) * Math.min(1, this.multiplier*Math.random()));
+        sun.value -= delta;
+        rain.value -= delta;
+
+        if (delta > 0 && rain.value > 0) {
+            const bounce = {
+                x: rain.position.x - sun.position.x,
+                y: rain.position.y - sun.position.y
+            };
+            const measure = Math.abs(bounce.x) + Math.abs(bounce.y);
+            const acceleration = {
+                x: bounce.x * this.acceleration * delta * time / measure,
+                y: bounce.y * this.acceleration * delta * time / measure,
+            };
+            rain.velocity.x += acceleration.x;
+            rain.velocity.y += acceleration.y;
+        }
+    },
+    apply(delta, entity, index, entities) {
+        if (!entity.bounds) { return; }
+
+        const rect = entityRect(entity);
+        for (let i = index + 1, len = entities.length; i < len; i++) {
+            const other = entities[i];
+            if (!other.bounds || !other.value) { continue; }
+            const otherRect = entityRect(other);
+            if (isCollision(rect, otherRect)) {
+                this.processCollision(delta, entity, other);
+                if (!entity.value) { break; }
             }
         }
     }
@@ -237,8 +295,8 @@ const Sun = {
                 bounds: {
                     centerX: 8,
                     centerY: 8,
-                    width: 2,
-                    height: 2,
+                    width: 4,
+                    height: 4,
                 },
                 value: Math.round(5 * Math.random() + 4)
             });
@@ -246,7 +304,7 @@ const Sun = {
     },
 }
 
-const SYSTEMS = [Gravity, Wind, RandomDrift, AirResistance, Velocity, GroundCollision, Reaper, Sun, SpriteDrawer];
+const SYSTEMS = [Gravity, Wind, RandomDrift, AirResistance, Velocity, PairwiseCollision, GroundCollision, Reaper, Sun, SpriteDrawer];
 
 function makeRow(layer, tile, cols) {
     for (let i = 0; i < cols; i++) {
@@ -360,7 +418,7 @@ Game.update = function (delta) {
     for (let e = 0, entityLen = map.resources.length; e < entityLen; e++) {
         const entity = map.resources[e];
         for (let s = 0, systemLen = this.systemsApply.length; s < systemLen; s++) {
-            this.systemsApply[s].apply(delta, entity, e);
+            this.systemsApply[s].apply(delta, entity, e, map.resources);
         }
     }
 };

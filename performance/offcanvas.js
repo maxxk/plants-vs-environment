@@ -58,7 +58,7 @@ const Wind = {
 const AirResistance = {
     soundSpeed: 8 * map.tsize,
     viscosity: {
-        x: 0.1,
+        x: 0.2,
         y: 1
     },
     apply(delta, entity) {
@@ -207,8 +207,8 @@ const GroundCollision = {
 }
 
 const Sun = {
-    maxNormalAngle: 0.5,
-    normalAngle: 0.5,
+    maxNormalAngle: 0.8,
+    normalAngle: 0.8,
     step: 0.005,
     cutoff: 0.99,
     velocity: 8*map.tsize,
@@ -220,29 +220,28 @@ const Sun = {
         if (Math.abs(this.normalAngle) > this.maxNormalAngle) {
             return;
         }
-        for (let i = -map.cols, last = 2*map.cols; i < last; i++) {
-            const emit = Math.random() > this.cutoff;
-            if (emit) {
-                entities.push({
-                    kind: 'sun',
-                    position: {
-                        x: i * map.tsize,
-                        y: 0,
-                    },
-                    velocity: {
-                        x: this.velocity * Math.sin(this.normalAngle),
-                        y: this.velocity * Math.cos(this.normalAngle)
-                    },
-                    photon: true,
-                    bounds: {
-                        centerX: 8,
-                        centerY: 8,
-                        width: 2,
-                        height: 2,
-                    },
-                    value: Math.round(5 * Math.random() + 4)
-                });
-            }
+        const count = Math.floor(3*map.cols*Math.random() * (1 - this.cutoff));
+        for (let i = 0; i < count; i++) {
+            const x = Math.round((3 * Math.random() - 2) * map.cols * map.tsize);
+            entities.push({
+                kind: 'sun',
+                position: {
+                    x: x,
+                    y: 0,
+                },
+                velocity: {
+                    x: this.velocity * Math.sin(this.normalAngle),
+                    y: this.velocity * Math.cos(this.normalAngle)
+                },
+                photon: true,
+                bounds: {
+                    centerX: 8,
+                    centerY: 8,
+                    width: 2,
+                    height: 2,
+                },
+                value: Math.round(5 * Math.random() + 4)
+            });
         }
     },
 }

@@ -45,8 +45,7 @@ const AirResistance = {
     },
     apply(delta, entity) {
         if (entity.velocity && !entity.photon) {
-            const velocityMeasure = Math.abs(entity.velocity.x) + Math.abs(entity.velocity.y);
-            const coeff = velocityMeasure > this.soundSpeed ? 2 : 1;
+            const coeff = measure(entity.velocity) > this.soundSpeed ? 2 : 1;
             entity.velocity.x *= (1 - coeff * delta * this.viscosity.x);
             entity.velocity.y *= (1 - coeff * delta * this.viscosity.y);
             if (Math.abs(entity.velocity.x) < 1) {
@@ -93,42 +92,19 @@ const Reaper = {
         }
         this.toDelete.length = 0;
     },
-    apply(delta, entity, index) {
+    apply(delta, entity, index, entities, map) {
         const lowerBound = entity.velocity && entity.position.y > map.rows * map.tsize;
         const lostValue = entity.value < 1;
         const upperBound = entity.position.y < 0;
         const sunBound = (entity.position.x < 0 || entity.position.x > map.tsize * map.cols) && entity.photon
             && entity.velocity.y < 0;
-        if (lowerBound || lostValue || upperBound || sunBound) {
+        const deadPlant = (entity.kind == "cell" && entity.static.structure <= 0);
+        if (lowerBound || lostValue || upperBound || sunBound || deadPlant) {
             this.toDelete.push(index);
+            if (deadPlant) {
+                map.deadPlants.push(entity);
+            }
         }
-    }
-}
-
-function isCollision(rect1, rect2) {
-    if (rect1.x < rect2.x + rect2.width &&
-        rect1.x + rect1.width > rect2.x &&
-        rect1.y < rect2.y + rect2.height &&
-        rect1.y + rect1.height > rect2.y) {
-        return true;
-    }
-    return false;
-}
-
-function entityCenter(entity) {
-    return {
-        x: entity.position.x + entity.bounds.centerX,
-        y: entity.position.y + entity.bounds.centerY,
-    };
-}
-
-function entityRect(entity) {
-    const center = entityCenter(entity);
-    return {
-        x: center.x - entity.bounds.width / 2,
-        y: center.y - entity.bounds.height / 2,
-        width: entity.bounds.width,
-        height: entity.bounds.height
     }
 }
 
@@ -206,11 +182,11 @@ const PairwiseCollision = {
                 x: rain.position.x - sun.position.x + sun.velocity.x,
                 y: rain.position.y - sun.position.y + sun.velocity.y,
             };
-            const sunMeasure = Math.abs(sun.velocity.x) + Math.abs(sun.velocity.y);
-            const measure = Math.abs(bounce.x) + Math.abs(bounce.y);
+            const sunMeasure = measure(sun.velocity);
+            const bounceMeasure = measure(bounce);
             const acceleration = {
-                x: bounce.x * this.acceleration * delta * time * sunMeasure / measure / measure,
-                y: bounce.y * this.acceleration * delta * time * sunMeasure / measure / measure,
+                x: bounce.x * this.acceleration * delta * time * sunMeasure / bounceMeasure / bounceMeasure,
+                y: bounce.y * this.acceleration * delta * time * sunMeasure / bounceMeasure / bounceMeasure,
             };
             rain.velocity.x += acceleration.x;
             rain.velocity.y += acceleration.y;
@@ -235,10 +211,10 @@ const PairwiseCollision = {
 const Sun = {
     maxNormalAngle: 0.8,
     normalAngle: 0.8,
-    step: 0.005,
-    cutoff: 0.99,
+    step: 0.002,
+    cutoff: 0.97,
     velocity: 8*map.tsize,
-    update(delta, entities) {
+    update(delta, entities, map) {
         this.normalAngle -= this.step;
         if (this.normalAngle < -Math.PI/2) {
             this.normalAngle = Math.PI/2;
@@ -249,7 +225,7 @@ const Sun = {
         const count = Math.floor(3*map.cols*Math.random() * (1 - this.cutoff));
         for (let i = 0; i < count; i++) {
             const x = Math.round((3 * Math.random() - 2) * map.cols * map.tsize);
-            entities.push({
+            addResource(map, {
                 kind: 'sun',
                 position: {
                     x: x,
@@ -272,16 +248,19 @@ const Sun = {
     },
 }
 
-function canSoak(tile) {
-    return tile && tile.kind === "ground" && tile.value < 9
-}
-
-function canLeak(tile) {
-    return tile && tile.kind === "ground" && tile.value > 0
+const Rain = {
+    cutoff: 0.97,
+    update(delta, entities, map) {
+        const count = Math.floor(map.cols*Math.random() * (1 - this.cutoff));
+        for (let i = 0; i < count; i++) {
+            const x = Math.round(Math.random() * map.cols * map.tsize);
+            addRain(map, { x, y: 1 * map.tsize }, Math.round(5 * Math.random() + 4));
+        }
+    }
 }
 
 const GroundSoak = {
-    primeStep: 313,
+    primeStep: 101,
     stepShift: 0,
     bottomLeak: 1,
     cutoff: 0.5,
@@ -303,7 +282,7 @@ const GroundSoak = {
         if (canLeak(from)
             && to.value < 9
             && Math.random() < this.cutoff) {
-            const delta = Math.ceil(from.value / divisor);
+            const delta = Math.min(9 - to.value, Math.ceil(from.value / divisor));
             from.value -= delta;
             to.value += delta;
             return true;
@@ -349,13 +328,13 @@ const GroundSoak = {
 
         let i = (map.rows - 1)*map.cols + this.stepShift;
         while (i >= 0) {
-            const row = i % map.cols;
-            const col = (i / map.cols) | 0; // integer division
+            const row = (i / map.cols) | 0;
+            const col = (i % map.cols); // integer division
             const tile = map.getTile(0, col, row);
             if (canSoak(tile)) {
-                this.gravitySoak(tile, col, row, map);
+                this.capillarSoak(tile, col, row, map);
                 if (canSoak(tile)) {
-                    this.capillarSoak(tile, col, row, map);
+                    this.gravitySoak(tile, col, row, map);
                 }
             }
             i -= this.primeStep;
@@ -368,4 +347,4 @@ const SYSTEMS = [
     Gravity, Wind, RandomDrift,
     AirResistance, Velocity,
     GroundSoak, PairwiseCollision, GroundCollision,
-    Reaper, Sun ];
+    Reaper, Sun, Rain ];

@@ -10,7 +10,13 @@ var map = {
         }
         return this.layers[layer][row * map.cols + col];
     },
-    resources: [] // entity
+    getTileAt({x, y}) {
+        const col = x / this.tsize | 0;
+        const row = y / this.tsize | 0;
+        return this.getTile(0, col, row);
+    },
+    resources: [], // entity
+    deadPlants: [],
 };
 
 function makeRow(layer, tile, cols) {

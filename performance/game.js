@@ -25,7 +25,8 @@ Game.load = function () {
     return [
         Loader.loadImage('tiles', '../assets/bloo.png'),
         Loader.loadImage('rain', '../assets/orb-blue.png'),
-        Loader.loadImage('sun', '../assets/orb-yellow.png')
+        Loader.loadImage('sun', '../assets/orb-yellow.png'),
+        Loader.loadImage('generic-plant', '../assets/generic-plant.png'),
     ];
 };
 
@@ -84,14 +85,14 @@ Game.update = function (delta) {
     for (let i = 0, len = this.systemsUpdate.length; i < len; i++) {
         const system = this.systemsUpdate[i];
         if (system.update) {
-            system.update(delta, map.resources);
+            system.update(delta, map.resources, map);
         }
     }
 
     for (let e = 0, entityLen = map.resources.length; e < entityLen; e++) {
         const entity = map.resources[e];
         for (let s = 0, systemLen = this.systemsApply.length; s < systemLen; s++) {
-            this.systemsApply[s].apply(delta, entity, e, map.resources);
+            this.systemsApply[s].apply(delta, entity, e, map.resources, map);
         }
     }
 };
@@ -155,7 +156,7 @@ Game._drawResources = function() {
         let resource = map.resources[i];
         const x = resource.position.x - this.camera.x;
         const y = resource.position.y - this.camera.y;
-        const image = resource.kind === 'sun' ? this.sun : this.rain;
+        const image = resource.image || (resource.kind === 'sun' ? this.sun : this.rain);
         const color = resource.kind === 'sun' ? 'black' : 'white';
         if (lastColor != color) {
             context.fillStyle = color;
@@ -187,25 +188,7 @@ Game.cycleResources = function(rainProbability, cutoff) {
         let rain = rainProbability * Math.random();
 
         if (rain > cutoff) {
-            map.resources.push({
-                kind: 'rain',
-                position: {
-                    x: i * map.tsize,
-                    y: 1 * map.tsize,
-                },
-                velocity: {
-                    x: 0,
-                    y: 0
-                },
-                bounds: {
-                    centerX: 8,
-                    centerY: 8,
-                    width: 8,
-                    height: 8,
-                },
-                gravity: true,
-                value: Math.round(5 * Math.random() + 4)
-            });
+            addRain(map, { x: i * map.tsize, y: 1 * map.tsize }, Math.round(5 * Math.random() + 4));
         }
     }
     this.render(true)

@@ -1,5 +1,5 @@
 function Plant(position, program, static, data) {
-    static.structure = static.structure || 100;
+    static.structure = static.structure || 1000;
     static.energy = static.energy || 10000;
     static.water = static.water || 1;
     return {
@@ -8,8 +8,8 @@ function Plant(position, program, static, data) {
         bounds: {
             centerX: 8,
             centerY: 8,
-            width: 8,
-            height: 8
+            width: 16,
+            height: 16
         },
         static,
         data,
@@ -126,10 +126,10 @@ const PlantSystem = {
         let spatialCache = findEntities(entity, map.resources, map.tsize);
 
         function findNearest({ point, filter, width }) {
-            width = width || 4;
+            width = width || 16;
             const pointRect = {
-                x: point.x - 1,
-                y: point.y - 1,
+                x: point.x - width/2,
+                y: point.y - width/2,
                 width,
                 height: width
             };
@@ -151,7 +151,7 @@ const PlantSystem = {
             getNearby(direction, width, filter, maxCount) {
                 let cost = Mat.ceil(measure(direction)*width*width*maxCount + 1);
                 if (pay(cost, `getNearby`)) return ERROR;
-                const result = findNearest({ position: vectorAdd(entity.position, direction), width, filter });
+                const result = findNearest({ position: vectorAdd(entityCenter(entity), direction), width, filter });
                 result.sort((a, b) => measure(vectorAdd(entity.position, vectorNegate(a.position)))
                     - vectorAdd(entity.position, vectorNegate(b.position)));
                 return { cost, result: result.slice(maxCount) }
@@ -187,7 +187,7 @@ const PlantSystem = {
                 const cost = Math.ceil(measure(vector)*measure(vector)+1)*amount;
                 if (pay(cost, `drainPhoton`)) { return ERROR; }
                 const photons = findNearest({
-                    point: vectorAdd(entity.position, vector),
+                    point: vectorAdd(entityCenter(entity), vector),
                     filter: e => e.kind === "sun" && e.value > 0
                 });
                 let transferred = 0;
@@ -195,7 +195,7 @@ const PlantSystem = {
                     const photon = photons[i];
                     const actualAmount = Math.min(amount - transferred, photon.value, entity.static.water * 2);
                     const water = Math.ceil(actualAmount/2);
-                    changeStatic(entity, { reason: "drainPhoton", water: -water, energy: actualAmount * 1000 })
+                    changeStatic(entity, { reason: "drainPhoton", water: -water, energy: actualAmount * 10000 })
                     photon.value = 0;
                     transferred += actualAmount;
                 }
@@ -206,14 +206,15 @@ const PlantSystem = {
             drainWaterDrop(vector, amount) {
                 const cost = Math.ceil(measure(vector)*measure(vector)+1)*amount;
                 if (pay(cost, `drainWaterDrop`)) { return ERROR; }
+                if (entity.static.water >= 9) { return; }
                 const drops = findNearest({
-                    point: vectorAdd(entity.position, vector),
+                    point: vectorAdd(entityCenter(entity), vector),
                     filter: e => e.kind === "rain" && e.value > 0
                 });
                 let transferred = 0;
                 for (let i = 0, len = drops.length; i < len && transferred < amount; i++) {
                     const drop = drops[i];
-                    const actualAmount = Math.min(amount - transferred, drop.value);
+                    const actualAmount = Math.min(amount - transferred, drop.value, 9 - entity.static.water);
                     changeStatic(entity, { reason: "drainWaterDrop", water: actualAmount });
                     drop.value -= actualAmount;
                     transferred += actualAmount;
@@ -225,10 +226,11 @@ const PlantSystem = {
             drainWaterCapillar(vector, amount) {
                 const cost = Math.ceil((measure(vector)*measure(vector)+1)/map.tsize/map.tsize)*amount;
                 if (pay(cost, `drainWaterCapillar`)) { return ERROR; }
+                if (entity.static.water >= 9) { return; }
                 const tile = map.getTileAt(vectorAdd(entity.position, vector));
                 let actualAmount;
                 if (canLeak(tile)) {
-                    actualAmount = Math.min(amount, tile.value);
+                    actualAmount = Math.min(amount, tile.value, 9 - entity.static.water);
                     changeStatic(entity, { reason: "drainWaterCapillar", water: actualAmount });
                     tile.value -= actualAmount;
                 } else {
@@ -256,14 +258,8 @@ const PlantSystem = {
 
 SYSTEMS.push(PlantSystem);
 
-setTimeout(() => addResource(map, Plant({ x: 440, y: 440 }, { code: function(static, data, delta, api) {
-        // if (!(data.delta < 1)) {
-        //     api.storeData("delta", data.delta + delta);
-        //     return;
-        // } else {
-        //     api.storeData("delta", 0);
-        // }
-
+setTimeout(() => {
+    addResource(map, Plant({ x: 480, y: 440 }, { code: function(static, data, delta, api) {
         if (static.water < 9) {
             api.drainWaterCapillar({ x: 0, y: 8 }, 1);
             api.drainWaterDrop({ x: 0, y: 0 }, 1);
@@ -271,5 +267,13 @@ setTimeout(() => addResource(map, Plant({ x: 440, y: 440 }, { code: function(sta
         if (static.water > 0) {
             api.drainPhoton({ x: 0, y: 0 }, 1);
         }
-    }, cost: 9 }, {}, {})),
-1000);
+    }, cost: 8 }, {}, {}));
+    addResource(map, Plant({ x: 400, y: 440 }, { code: function(static, data, delta, api) {
+        api.drainWaterCapillar({ x: 0, y: 8 }, 1);
+        api.drainWaterDrop({ x: 0, y: 0 }, 1);
+        api.drainPhoton({ x: 0, y: 0 }, 1);
+    }, cost: 7 }, {}, {}));
+    addResource(map, Plant({ x: 320, y: 440 }, { code: function(static, data, delta, api) {
+    }, cost: 0 }, {}, {}));
+    
+}, 1000);

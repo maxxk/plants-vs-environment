@@ -88,3 +88,16 @@ const debounce = (callback, delay = 250) => {
         }, delay);
     }
 }
+
+function astSize(ast) {
+    const state = { size: 0 };
+    acorn.walk.full(ast, () => {
+        state.size += 1;
+    });
+    return state.size;
+}
+
+function codeMeasure(code) {
+    const ast = acorn.parse(code);
+    return astSize(ast);
+}

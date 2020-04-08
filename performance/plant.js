@@ -20,6 +20,8 @@ function Plant(position, program, static, data) {
     }
 }
 
+const ARGUMENTS = ["static", "data", "delta", "api"];
+
 function findEntities(entity, list, size) {
     const result = [];
     const { x, y } = entityCenter(entity);
@@ -149,12 +151,12 @@ const PlantSystem = {
 
         const api = {
             getNearby(direction, width, filter, maxCount) {
-                let cost = Mat.ceil(measure(direction)*width*width*maxCount + 1);
+                let cost = Math.ceil(measure(direction)*width*width*maxCount + 1);
                 if (pay(cost, `getNearby`)) return ERROR;
-                const result = findNearest({ position: vectorAdd(entityCenter(entity), direction), width, filter });
+                const result = findNearest({ point: vectorAdd(entityCenter(entity), direction), width, filter });
                 result.sort((a, b) => measure(vectorAdd(entity.position, vectorNegate(a.position)))
                     - vectorAdd(entity.position, vectorNegate(b.position)));
-                return { cost, result: result.slice(maxCount) }
+                return { cost, result: result.slice(0, maxCount) }
             },
 
             getTile(direction) {
@@ -244,11 +246,47 @@ const PlantSystem = {
                 const cost = Math.ceil(measure(vector)*measure(vector))*amount;
                 if (pay(cost, `spillWater`)) { return ERROR; }
                 const actualAmount = Math.min(amount, entity.static.water);
-                changeStatic({ reason: "spillWater", water: -actualAmount });
-                addRain(map, vectorAdd(entity.position, vectior), actualAmount);
+                changeStatic(entity, { reason: "spillWater", water: -actualAmount });
+                addRain(map, vectorAdd(entity.position, vector), actualAmount);
                 refreshData();
                 return { cost, actualAmount };
             },
+
+            structureToEnergy(amount) {
+                if (entity.static.structure < amount) {
+                    return ERROR;
+                }
+                changeStatic(entity, { reason: "structureToEnergy", structure: -amount, energy: 2*amount });
+            },
+
+            repair(amount) {
+                const cost = amount * 8;
+                if (pay(cost, "repair")) { return ERROR; }
+                changeStatic(entity, { reason: "repair", structure: amount });
+            },
+
+            split({ vector, structure, energy, water, data, code }) {
+                const codeSize = code ? codeMeasure(code) : entity.program.cost;
+                code = code ? new Function(ARGUMENTS, code) : entity.program.code;
+                data = data || {};
+                
+                const dataString = JSON.stringify(data);
+                const dataSize = Math.ceil(Math.log(dataString.length));
+                const cost = (10 + codeSize + dataSize + water) * Math.ceil((measure(vector)*measure(vector)+1)/map.tsize/map.tsize);
+                if (entity.static.structure < structure
+                        || entity.static.energy < cost + energy
+                        || entity.static.water < water) {
+                    return ERROR;
+                }
+                if (pay(cost, "split")) {
+                    return ERROR;
+                }
+                changeStatic(entity, { reason: "split", structure: -structure, water: -water, energy: -energy });
+                addResource(map, Plant(vectorAdd(entity.position, vector),
+                    { code, cost: codeSize },
+                    { structure, water, energy },
+                    JSON.parse(dataString)));
+            }
             // todo: drawImage
         }
         
@@ -261,13 +299,38 @@ SYSTEMS.push(PlantSystem);
 setTimeout(() => {
     addResource(map, Plant({ x: 480, y: 440 }, { code: function(static, data, delta, api) {
         if (static.water < 9) {
-            if (static.water < 2 || static.energy > 100) {
+            if (static.water < 3 || static.energy > 5000) {
                 api.drainWaterCapillar({ x: 0, y: 8 }, 1);
                 api.drainWaterDrop({ x: 0, y: 0 }, 1);
             }
         }
         if (static.water > 0) {
-            api.drainPhoton({ x: 0, y: 0 }, 1);
+            if (api.drainPhoton({ x: 0, y: 0 }, 1) === "ERROR") {
+                api.structureToEnergy(8);
+                api.drainPhoton({ x: 0, y: 0 }, 1);
+            }
+        } else if (api.drainWaterCapillar({ x: 0, y: 8}, 1) === "ERROR") {
+            api.structureToEnergy(8);
+            api.drainWaterCapillar({ x: 0, y: 8 }, 1);
+        }
+        if (static.water > 0 && static.energy > 10000 && static.structure < 1000) {
+            api.repair(16);
+        }
+        if (static.water > 0 && static.energy > 22000 && static.structure >= 1000) {
+            const directions = [
+                { x: 24, y: 0 },
+                { x: -24, y: 0},
+                { x: 0, y: 24 },
+                { x: 0, y: -24 }
+            ];
+            for (let d of directions) {
+                const neighbors = api.getNearby(d, 1, x => x.kind === "cell", 1);
+                if (neighbors.result.length === 0) {
+                    api.split({ vector: d, data: {},
+                        water: Math.ceil(static.water/2), energy: Math.ceil(static.energy/2), structure: Math.ceil(static.structure/2) });
+                        break;
+                }
+            }
         }
     }, cost: 8 }, {}, {}));
     addResource(map, Plant({ x: 400, y: 440 }, { code: function(static, data, delta, api) {

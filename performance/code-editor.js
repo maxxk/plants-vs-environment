@@ -19,18 +19,9 @@ const jsResult = Atom(value => {
     document.getElementById("code-status").innerText = value
 }, "No data");
 
-function astSize(ast) {
-    const state = { size: 0 };
-    acorn.walk.full(ast, () => {
-        state.size += 1;
-    });
-    return state.size;
-}
-
 editor.on("changes", debounce(function(cm) {
     try {
-        const ast = acorn.parse(cm.getDoc().getValue());
-        const size = astSize(ast);
+        const size = codeMeasure(cm.getDoc().getValue());
         jsResult(`Complexity: ${Math.ceil(2*Math.log(size))}`)
     } catch {
         jsResult("Parse error")

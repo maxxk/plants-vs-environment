@@ -195,7 +195,7 @@ const PlantSystem = {
                     const photon = photons[i];
                     const actualAmount = Math.min(amount - transferred, photon.value, entity.static.water * 2);
                     const water = Math.ceil(actualAmount/2);
-                    changeStatic(entity, { reason: "drainPhoton", water: -water, energy: actualAmount * 10000 })
+                    changeStatic(entity, { reason: "drainPhoton", water: -water, energy: actualAmount * 2000 })
                     photon.value = 0;
                     transferred += actualAmount;
                 }
@@ -261,8 +261,10 @@ SYSTEMS.push(PlantSystem);
 setTimeout(() => {
     addResource(map, Plant({ x: 480, y: 440 }, { code: function(static, data, delta, api) {
         if (static.water < 9) {
-            api.drainWaterCapillar({ x: 0, y: 8 }, 1);
-            api.drainWaterDrop({ x: 0, y: 0 }, 1);
+            if (static.water < 2 || static.energy > 100) {
+                api.drainWaterCapillar({ x: 0, y: 8 }, 1);
+                api.drainWaterDrop({ x: 0, y: 0 }, 1);
+            }
         }
         if (static.water > 0) {
             api.drainPhoton({ x: 0, y: 0 }, 1);

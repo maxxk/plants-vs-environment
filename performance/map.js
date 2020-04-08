@@ -32,7 +32,7 @@ function makeMap(cols, rows) {
         makeRow(layer, { x: 8, y: 1, kind: "air" }, cols)
     }
     for (let i = rows - map.groundRows; i < rows; i++) {
-        makeRow(layer, { x: 1, y: 1, value: 0, color: "white", kind: "ground" }, cols)
+        makeRow(layer, { x: 1, y: 1, value: Math.floor(10*Math.random()), color: "white", kind: "ground" }, cols)
     }
     return layer;
 }

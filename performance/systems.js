@@ -249,7 +249,7 @@ const Sun = {
 }
 
 const Rain = {
-    cutoff: 0.97,
+    cutoff: 0.98,
     update(delta, entities, map) {
         const count = Math.floor(map.cols*Math.random() * (1 - this.cutoff));
         for (let i = 0; i < count; i++) {
@@ -263,7 +263,7 @@ const GroundSoak = {
     primeStep: 101,
     stepShift: 0,
     bottomLeak: 1,
-    cutoff: 0.5,
+    cutoff: 0.4,
     multiplier: 2,
     lastRowLeak(map) {
         const row = map.rows - 1;
@@ -272,7 +272,7 @@ const GroundSoak = {
             if (!tile || !tile.value || tile.kind !== "ground") {
                 continue;
             }
-            if (Math.random() < this.cutoff) {
+            if (Math.random() > this.cutoff) {
                 continue;
             }
             tile.value -= this.bottomLeak;
@@ -304,9 +304,9 @@ const GroundSoak = {
         const north = map.getTile(0, col, row-1);
         const northeast = map.getTile(0, col-1, row-1);
         const northwest = map.getTile(0, col+1, row-1);
-        this.transferPart(north, tile, 2) 
-            || this.transferPart(northeast, tile, 3)
-            || this.transferPart(northwest, tile, 3);
+        this.transferPart(north, tile, 3) 
+            || this.transferPart(northeast, tile, 4)
+            || this.transferPart(northwest, tile, 4);
     },
     capillarSoak(tile, col, row, map) {
         const west = map.getTile(0, col+1, row);
@@ -326,10 +326,10 @@ const GroundSoak = {
         
         this.lastRowLeak(map);
 
-        let i = (map.rows - 1)*map.cols + this.stepShift;
+        let i = map.rows*map.cols - 1 + this.stepShift;
         while (i >= 0) {
-            const row = (i / map.cols) | 0;
-            const col = (i % map.cols); // integer division
+            const row = (i / map.cols) | 0; // integer division
+            const col = (i % map.cols);
             const tile = map.getTile(0, col, row);
             if (canSoak(tile)) {
                 this.capillarSoak(tile, col, row, map);

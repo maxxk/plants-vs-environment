@@ -103,10 +103,9 @@ Game.tick = function (elapsed) {
     delta = Math.min(delta, 0.25); // maximum delta of 250 ms
     this._previousElapsed = elapsed;
 
+    this.update(delta);
     // clear previous frame
     this.ctx.clearRect(0, 0, 512, 512);
-
-    this.update(delta);
     this.render();
 }.bind(Game);
 

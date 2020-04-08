@@ -163,7 +163,11 @@ Game._drawResources = function() {
         }
         context.drawImage(image, x, y);
         if (resource.value) {
-            context.fillText(resource.value, x + map.tsize/4, y + map.tsize*3/4);
+            context.fillText(resource.value, x + map.tsize/4 | 0, y + map.tsize*3/4 | 0);
+        } else if (resource.kind === "cell") {
+            context.fillText(resource.static.structure/100|0, x | 0, y);
+            context.fillText(resource.static.water, x + map.tsize | 0, y);
+            context.fillText(resource.static.energy/100|0, x, y + map.tsize);
         }
     }
 }

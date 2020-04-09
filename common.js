@@ -1,3 +1,4 @@
+// @ts-check
 //
 // Asset loader
 //
@@ -66,8 +67,9 @@ Keyboard._onKeyUp = function (event) {
     }
 };
 
+/** @type {(keyCode:number)=>boolean} */
 Keyboard.isDown = function (keyCode) {
-    if (!keyCode in this._keys) {
+    if (!(keyCode in this._keys)) {
         throw new Error('Keycode ' + keyCode + ' is not being listened to');
     }
     return this._keys[keyCode];
@@ -76,6 +78,7 @@ Keyboard.isDown = function (keyCode) {
 //
 // Game object
 //
+
 
 var Game = {
 };
@@ -110,8 +113,10 @@ Game.tick = function (elapsed) {
 }.bind(Game);
 
 // override these methods to create the demo
-Game.init = function () {};
-Game.update = function (delta) {};
+/** @type {()=>void} */
+//Game.init = function () {};
+/** @type {(delta: number)=>void} */
+//Game.update = function (delta) {};
 Game.render = function () {};
 
 //
@@ -119,6 +124,10 @@ Game.render = function () {};
 //
 
 window.onload = function () {
-    var context = document.getElementById('demo').getContext('2d');
+    const canvas = document.getElementById('demo');
+    if (!(canvas instanceof HTMLCanvasElement)) {
+        throw new Error("Browser does not support canvas")
+    }
+    const context = canvas.getContext('2d');
     Game.run(context);
 };

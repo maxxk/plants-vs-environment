@@ -1,12 +1,19 @@
+// @ts-check
+/// <reference path="./map.js" />
+/** @type {System & { acceleration: number }} */
 const Gravity = {
     acceleration: 4*map.tsize,
     apply(delta, entity) {
-        if (entity.velocity && !entity.photon) {
+        if (typeof entity.velocity !== "undefined" && entity.photon !== true) {
             entity.velocity.y += this.acceleration * delta;
         }
     }
 }
 
+/** @type {System & { 
+ * multiplier: number, cutoff: number, direction: Vector, max: number,
+ * applyBound(value: number): number
+ * }} */
 const Wind = {
     multiplier: 4,
     cutoff: 0.5,
@@ -37,6 +44,7 @@ const Wind = {
     }
 }
 
+/** @type {System & { soundSpeed: number, viscosity: Vector }} */
 const AirResistance = {
     soundSpeed: 8 * map.tsize,
     viscosity: {
@@ -58,6 +66,7 @@ const AirResistance = {
     }
 }
 
+/** @type {System} */
 const Velocity = {
     apply(delta, entity) {
         if (entity.velocity) {
@@ -67,6 +76,7 @@ const Velocity = {
     }
 }
 
+/** @type {System & { cutoff: number, amount: number }} */
 const RandomDrift = {
     cutoff: 0.1,
     amount: 4 * map.tsize,
@@ -84,6 +94,7 @@ const RandomDrift = {
     }
 }
 
+/** @type {System & { toDelete: Array<number> }} */
 const Reaper = {
     toDelete: [],
     update(delta, entities) {
@@ -108,6 +119,7 @@ const Reaper = {
     }
 }
 
+/** @type { System & { processCollision(entity: Entity, tile: Tile): void } } */
 const GroundCollision = {
     processCollision(entity, tile) {
         if (entity.velocity && entity.velocity.y > 0) {
@@ -158,6 +170,9 @@ const GroundCollision = {
     }
 }
 
+/** @type { System & { multiplier: number, acceleration: number, 
+ *  processCollision(time: number, e1: Entity, e2: Entity): void
+ *  } } */
 const PairwiseCollision = {
     multiplier: 2,
     acceleration: 16 * map.tsize,
@@ -208,6 +223,13 @@ const PairwiseCollision = {
     }
 }
 
+/** @type { System & {
+ * maxNormalAngle: number,
+ * normalAngle: number,
+ * step: number,
+ * cutoff: number,
+ * velocity: number
+ * }} */
 const Sun = {
     maxNormalAngle: 0.8,
     normalAngle: 0.8,
@@ -248,6 +270,7 @@ const Sun = {
     },
 }
 
+/** @type { System & { cutoff: number } } */
 const Rain = {
     cutoff: 0.98,
     update(delta, entities, map) {
@@ -259,6 +282,18 @@ const Rain = {
     }
 }
 
+/** @type { System & {
+ * primeStep: number,
+ * stepShift: number,
+ * bottomLeak: number,
+ * cutoff: number,
+ * multiplier: number,
+ * lastRowLeak(map: GameMap): void,
+ * transferPart(from: Tile, to: Tile, divisor: number): boolean,
+ * transferOne(from: Tile, to: Tile): boolean,
+ * gravitySoak(tile: Tile, col: number, row: number, map: GameMap),
+ * capillarSoak(tile: Tile, col: number, row: number, map: GameMap)
+ * }} */
 const GroundSoak = {
     primeStep: 101,
     stepShift: 0,
@@ -317,13 +352,7 @@ const GroundSoak = {
             || this.transferOne(east, tile)
             || this.transferOne(south, tile);
     },
-    update(delta) {
-        this.current += delta;
-        if (this.current < this.period) {
-            return;
-        }
-        this.current = 0;
-        
+    update(delta, entities, map) {
         this.lastRowLeak(map);
 
         let i = map.rows*map.cols - 1 + this.stepShift;

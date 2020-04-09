@@ -1,3 +1,6 @@
+// @ts-check
+
+/** @returns {Cell} */
 function Plant(position, program, static, data) {
     static.structure = static.structure || 1000;
     static.energy = static.energy || 10000;
@@ -127,6 +130,10 @@ const PlantSystem = {
         
         let spatialCache = findEntities(entity, map.resources, map.tsize);
 
+        /**
+         * 
+         * @param {{ point: Vector, filter(e: Entity): boolean, width?: number }} arg
+         */
         function findNearest({ point, filter, width }) {
             width = width || 16;
             const pointRect = {
@@ -155,12 +162,12 @@ const PlantSystem = {
                 if (pay(cost, `getNearby`)) return ERROR;
                 const result = findNearest({ point: vectorAdd(entityCenter(entity), direction), width, filter });
                 result.sort((a, b) => measure(vectorAdd(entity.position, vectorNegate(a.position)))
-                    - vectorAdd(entity.position, vectorNegate(b.position)));
+                    - measure(vectorAdd(entity.position, vectorNegate(b.position))));
                 return { cost, result: result.slice(0, maxCount) }
             },
 
             getTile(direction) {
-                const cost = Math.ceil(measure(direction) + 1);
+                const cost = Math.ceil(measure(direction)/map.tsize + 1);
                 if (pay(cost, `getTile`)) { return ERROR; }
                 return { cost: 1, tile: map.getTileAt(vectorAdd(entity.position, direction)) };
             },
@@ -185,11 +192,27 @@ const PlantSystem = {
                 return { cost };
             },
 
+            consume(kind, amount) {
+                const cost = amount * amount;
+                if (pay(cost, `consume ${kind}`)) { return ERROR; }
+                const resources = findNearest({
+                    point: entityCenter(entity),
+                    filter: e => e.kind === kind && e.value > 0
+                });
+                let transfer = 0;
+                for (let i = 0, len = resources.length; i < len && transfer < amount; i++) {
+                    const resource = resources[i];
+                    
+                }
+                refreshData();
+                return { cost,  }
+            },
+
             drainPhoton(vector, amount) {
-                const cost = Math.ceil(measure(vector)*measure(vector)+1)*amount;
+                const cost = amount * amount;
                 if (pay(cost, `drainPhoton`)) { return ERROR; }
                 const photons = findNearest({
-                    point: vectorAdd(entityCenter(entity), vector),
+                    point: entityCenter(entity),
                     filter: e => e.kind === "sun" && e.value > 0
                 });
                 let transferred = 0;
@@ -267,7 +290,7 @@ const PlantSystem = {
 
             split({ vector, structure, energy, water, data, code }) {
                 const codeSize = code ? codeMeasure(code) : entity.program.cost;
-                code = code ? new Function(ARGUMENTS, code) : entity.program.code;
+                code = code ? new Function(...ARGUMENTS, code) : entity.program.code;
                 data = data || {};
                 
                 const dataString = JSON.stringify(data);

@@ -1,3 +1,5 @@
+// @ts-check
+
 const WIDTH = 512;
 const HEIGHT = 512;
 

@@ -65,7 +65,7 @@ function measure(vector) {
 /**
  * 
  * @param {GameMap} map 
- * @param {Resource|Cell} resource 
+ * @param {Entity} resource 
  */
 function addResource(map, resource) {
     map.resources.push(resource);

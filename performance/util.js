@@ -1,3 +1,11 @@
+// @ts-check
+///  <reference path="../external/acorn.d.ts" />
+///  <reference path="../external/acorn-walk.d.ts" />
+
+/**
+ * @param {Rectangle} rect1
+ * @param {Rectangle} rect2
+ */
 function isCollision(rect1, rect2) {
     if (rect1.x < rect2.x + rect2.width &&
         rect1.x + rect1.width > rect2.x &&
@@ -8,6 +16,10 @@ function isCollision(rect1, rect2) {
     return false;
 }
 
+/**
+ * 
+ * @param {EntityPosition & Bound} entity 
+ */
 function entityCenter(entity) {
     return {
         x: entity.position.x + entity.bounds.centerX,
@@ -15,6 +27,9 @@ function entityCenter(entity) {
     };
 }
 
+/**
+ * @param {EntityPosition & Bound} entity
+ */
 function entityRect(entity) {
     const center = entityCenter(entity);
     return {
@@ -25,21 +40,37 @@ function entityRect(entity) {
     }
 }
 
+/**
+ * @param {Tile?} tile
+ */
 function canSoak(tile) {
     return tile && tile.kind === "ground" && tile.value < 9
 }
 
+/**
+ * @param {Tile?} tile
+ */
 function canLeak(tile) {
     return tile && tile.kind === "ground" && tile.value > 0
 }
 
+/**
+ * 
+ * @param {Vector} vector 
+ */
 function measure(vector) {
     return Math.abs(vector.x) + Math.abs(vector.y);
 }
 
+/**
+ * 
+ * @param {GameMap} map 
+ * @param {Resource|Cell} resource 
+ */
 function addResource(map, resource) {
     map.resources.push(resource);
 }
+
 
 function addRain(map, position, value) {
     addResource(map, {
@@ -55,11 +86,15 @@ function addRain(map, position, value) {
             width: 8,
             height: 8,
         },
-        gravity: true,
+        //gravity: true,
         value
     });
 }
 
+/**
+ * @param {Vector} a
+ * @param {Vector} b
+ */
 function vectorAdd(a, b) {
     return {
         x: a.x + b.x,
@@ -67,6 +102,10 @@ function vectorAdd(a, b) {
     }
 }
 
+/**
+ * 
+ * @param {Vector} param0 
+ */
 function vectorNegate({x, y}) {
     return {
         x: -x,
@@ -74,6 +113,9 @@ function vectorNegate({x, y}) {
     }
 }
 
+/**
+ * @param {any} object
+ */
 function deepCopy(object) {
     return JSON.parse(JSON.stringify(object));
 }

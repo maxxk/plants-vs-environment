@@ -9,8 +9,8 @@ function Plant(position, program, static, data) {
         kind: "cell",
         position,
         bounds: {
-            centerX: 8,
-            centerY: 8,
+            x: 8,
+            y: 8,
             width: 16,
             height: 16
         },

@@ -17,14 +17,33 @@ function isCollision(rect1, rect2) {
 }
 
 /**
+ * @param {Vector} a
+ * @param {Vector} b
+ */
+function vectorAdd(a, b) {
+    return {
+        x: a.x + b.x,
+        y: a.y + b.y
+    }
+}
+
+/**
+ * 
+ * @param {Vector} param0 
+ */
+function vectorNegate({x, y}) {
+    return {
+        x: -x,
+        y: -y
+    }
+}
+
+/**
  * 
  * @param {EntityPosition & Bound} entity 
  */
 function entityCenter(entity) {
-    return {
-        x: entity.position.x + entity.bounds.centerX,
-        y: entity.position.y + entity.bounds.centerY,
-    };
+    return vectorAdd(entity.position, entity.bounds);
 }
 
 /**
@@ -81,8 +100,8 @@ function addRain(map, position, value) {
             y: 0
         },
         bounds: {
-            centerX: 8,
-            centerY: 8,
+            x: 8,
+            y: 8,
             width: 8,
             height: 8,
         },
@@ -91,27 +110,6 @@ function addRain(map, position, value) {
     });
 }
 
-/**
- * @param {Vector} a
- * @param {Vector} b
- */
-function vectorAdd(a, b) {
-    return {
-        x: a.x + b.x,
-        y: a.y + b.y
-    }
-}
-
-/**
- * 
- * @param {Vector} param0 
- */
-function vectorNegate({x, y}) {
-    return {
-        x: -x,
-        y: -y
-    }
-}
 
 /**
  * @param {any} object

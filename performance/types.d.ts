@@ -6,7 +6,7 @@ type TileKinds = "ground" | "air" | "sky";
 
 type EntityPosition = { position: Point };
 type Velocity = { velocity: Point };
-type Bound =  { bounds: { centerX: number, centerY: number, width: number, height: number } };
+type Bound =  { bounds: Vector & { width: number, height: number } };
 type Resource = { kind: ResourceKinds, value: number, photon?: boolean, image?: undefined } & EntityPosition & Velocity & Bound;
 
 type Tile = ({ kind: "air" | "sky", value: undefined } | { kind: "ground", value: number }) & Vector & {

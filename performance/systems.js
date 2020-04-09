@@ -259,8 +259,8 @@ const Sun = {
                 },
                 photon: true,
                 bounds: {
-                    centerX: 8,
-                    centerY: 8,
+                    x: 8,
+                    y: 8,
                     width: 4,
                     height: 4,
                 },

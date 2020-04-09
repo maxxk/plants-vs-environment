@@ -9,7 +9,9 @@ type Velocity = { velocity: Point };
 type Bound =  { bounds: { centerX: number, centerY: number, width: number, height: number } };
 type Resource = { kind: ResourceKinds, value: number } & EntityPosition & Velocity & Bound;
 
-type Tile = { kind: "air" | "sky" } | { kind: "ground", value: number };
+type Tile = ({ kind: "air" | "sky" } | { kind: "ground", value: number }) & Vector & {
+    color?: string
+};
 
 type CellStatic = {
     energy: number,

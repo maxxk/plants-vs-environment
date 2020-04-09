@@ -1,3 +1,8 @@
+// @ts-check
+
+/**
+ * @type GameMap
+ */
 var map = {
     cols: 64,
     rows: 48,
@@ -19,12 +24,24 @@ var map = {
     deadPlants: [],
 };
 
+/**
+ * 
+ * @param {Array<Tile>} layer 
+ * @param {Tile} tile 
+ * @param {number} cols 
+ */
 function makeRow(layer, tile, cols) {
     for (let i = 0; i < cols; i++) {
         layer.push(Object.assign({}, tile))
     }
 }
 
+/**
+ * 
+ * @param {number} cols 
+ * @param {number} rows 
+ * @returns {Array<Tile>}
+ */
 function makeMap(cols, rows) {
     let layer = [];
     makeRow(layer, { x: 3, y: 5, color: "white", kind: "sky" }, cols); // "sky"

@@ -25,6 +25,12 @@ function Plant(position, program, static, data) {
 
 const ARGUMENTS = ["static", "data", "delta", "api"];
 
+/**
+ * 
+ * @param {Entity} entity 
+ * @param {Array<Entity>} list 
+ * @param {number} size 
+ */
 function findEntities(entity, list, size) {
     const result = [];
     const { x, y } = entityCenter(entity);
@@ -43,12 +49,15 @@ function findEntities(entity, list, size) {
     return result;
 }
 
+/**
+ * @param {Cell} entity
+ * @param {{ reason: string; water?: number; energy?: number; structure?: number; }} data
+ */
 function changeStatic(entity, data) {
     const { reason, energy, structure, water } = data;
     
     if (!entity.log[reason]) {
-        entity.log[reason] = data;
-        entity.log[reason].count = 1;
+        entity.log[reason] = { ...data, count: 1 };
         return;
     }
 
@@ -70,12 +79,45 @@ function changeStatic(entity, data) {
     entity.log[reason].count += 1;
 }
 
+/**
+ * @param {Cell} entity
+ * @param {number} energy 
+ * @param {string} reason 
+ * @param {number} delta
+ */
+function pay(entity, energy, reason, delta) {
+    energy = Math.ceil(energy * delta);
+    if (entity.static.energy < energy) {
+        return ERROR;
+    }
+    changeStatic(entity, { reason: reason || "Pay", energy: -energy });
+}
+
+/**
+ * 
+ * @param {Cell} entity 
+ * @param {CellStatic} static 
+ * @param {any} data 
+ */
+function refreshData(entity, static, data) {
+    Object.assign(static, entity.static);
+    Object.assign(data, deepCopy(entity.data));
+}
+
 const ERROR = "ERROR";
 
+/** @type {System & {
+ * structureCost: number,
+ * drainCutoff: number,
+ * drain(delta: number, entity: Cell, tile: { col: number, row: number }, map: GameMap): void
+ * }} */
 const PlantSystem = {
     structureCost: 0.1,
     drainCutoff: 1,
     drain(delta, entity, tile, map) {
+        /**
+         * @param {Tile} to
+         */
         function doDrain(to) {
             if (entity.static.water > 0 
                 && canSoak(to) 
@@ -103,20 +145,12 @@ const PlantSystem = {
 
         let static = Object.assign({}, entity.static); // static has only values
         let data = deepCopy(entity.data);
-        function pay(energy, reason) {
-            energy = Math.ceil(energy * delta);
-            if (entity.static.energy < energy) {
-                return ERROR;
-            }
-            changeStatic(entity, { reason: reason || "Pay", energy: -energy });
-            Object.assign(static, entity.static);
-        }
 
         const dataCost = Math.log(JSON.stringify(entity.data).length);
         const upkeep = Math.ceil(entity.static.structure * this.structureCost + dataCost)
             + entity.program.cost;
 
-        if (pay(upkeep, "Upkeep")) {
+        if (pay(entity, upkeep, "Upkeep", delta)) {
             const structure = Math.ceil(upkeep * delta * this.structureCost);
             changeStatic(entity, { reason: "insufficient-energy", structure: -structure });
         }
@@ -149,26 +183,22 @@ const PlantSystem = {
             return result.filter(e => isCollision(entityRect(e), pointRect));
         }
 
-        function refreshData() {
-            Object.assign(static, entity.static);
-            data = deepCopy(entity.data);
-        }
-
-        refreshData();
+        refreshData(entity, static, data);
 
         const api = {
             getNearby(direction, width, filter, maxCount) {
                 let cost = Math.ceil(measure(direction)*width*width*maxCount + 1);
-                if (pay(cost, `getNearby`)) return ERROR;
+                if (pay(entity, cost, `getNearby`, delta)) return ERROR;
                 const result = findNearest({ point: vectorAdd(entityCenter(entity), direction), width, filter });
                 result.sort((a, b) => measure(vectorAdd(entity.position, vectorNegate(a.position)))
                     - measure(vectorAdd(entity.position, vectorNegate(b.position))));
+                refreshData(entity, static, data);
                 return { cost, result: result.slice(0, maxCount) }
             },
 
             getTile(direction) {
                 const cost = Math.ceil(measure(direction)/map.tsize + 1);
-                if (pay(cost, `getTile`)) { return ERROR; }
+                if (pay(entity, cost, `getTile`, delta)) { return ERROR; }
                 return { cost: 1, tile: map.getTileAt(vectorAdd(entity.position, direction)) };
             },
 
@@ -176,25 +206,25 @@ const PlantSystem = {
                 const keyString = JSON.stringify(key);
                 const valueString = JSON.stringify(value);
                 const cost = Math.ceil(Math.log(keyString.length + valueString.length));
-                if (pay(cost, `storeData`)) { return ERROR; }
+                if (pay(entity, cost, `storeData`, delta)) { return ERROR; }
                 entity.data[JSON.parse(keyString)] = JSON.parse(valueString);
                 Object.assign(data, entity.data);
-                refreshData();
+                refreshData(entity, static, data);
                 return { cost };
             },
 
             deleteData(key) {
                 const keyString = JSON.stringify(key);
                 const cost = Math.ceil(Math.log(keyString.length));
-                if (pay(cost, `deleteData`)) { return ERROR; }
+                if (pay(entity, cost, `deleteData`, delta)) { return ERROR; }
                 delete entity.data[JSON.parse(keyString)]
-                refreshData();
+                refreshData(entity, static, data);
                 return { cost };
             },
 
             consume(kind, amount) {
                 const cost = amount * amount;
-                if (pay(cost, `consume ${kind}`)) { return ERROR; }
+                if (pay(entity, cost, `consume ${kind}`, delta)) { return ERROR; }
                 const resources = findNearest({
                     point: entityCenter(entity),
                     filter: e => e.kind === kind && e.value > 0
@@ -204,13 +234,13 @@ const PlantSystem = {
                     const resource = resources[i];
                     
                 }
-                refreshData();
+                refreshData(entity, static, data);
                 return { cost,  }
             },
 
             drainPhoton(vector, amount) {
                 const cost = amount * amount;
-                if (pay(cost, `drainPhoton`)) { return ERROR; }
+                if (pay(entity, cost, `drainPhoton`, delta)) { return ERROR; }
                 const photons = findNearest({
                     point: entityCenter(entity),
                     filter: e => e.kind === "sun" && e.value > 0
@@ -224,13 +254,13 @@ const PlantSystem = {
                     photon.value = 0;
                     transferred += actualAmount;
                 }
-                refreshData();
+                refreshData(entity, static, data);
                 return { cost, actualAmount: transferred };
             },
 
             drainWaterDrop(vector, amount) {
                 const cost = Math.ceil(measure(vector)*measure(vector)+1)*amount;
-                if (pay(cost, `drainWaterDrop`)) { return ERROR; }
+                if (pay(entity, cost, `drainWaterDrop`, delta)) { return ERROR; }
                 if (entity.static.water >= 9) { return; }
                 const drops = findNearest({
                     point: vectorAdd(entityCenter(entity), vector),
@@ -244,13 +274,13 @@ const PlantSystem = {
                     drop.value -= actualAmount;
                     transferred += actualAmount;
                 }
-                refreshData();
+                refreshData(entity, static, data);
                 return { cost, actualAmount: transferred };
             },
 
             drainWaterCapillar(vector, amount) {
                 const cost = Math.ceil((measure(vector)*measure(vector)+1)/map.tsize/map.tsize)*amount;
-                if (pay(cost, `drainWaterCapillar`)) { return ERROR; }
+                if (pay(entity, cost, `drainWaterCapillar`, delta)) { return ERROR; }
                 if (entity.static.water >= 9) { return; }
                 const tile = map.getTileAt(vectorAdd(entity.position, vector));
                 let actualAmount;
@@ -261,17 +291,17 @@ const PlantSystem = {
                 } else {
                     actualAmount = 0;
                 }
-                refreshData();
+                refreshData(entity, static, data);
                 return { cost, actualAmount };
             },
 
             spillWater(vector, amount) {
                 const cost = Math.ceil(measure(vector)*measure(vector))*amount;
-                if (pay(cost, `spillWater`)) { return ERROR; }
+                if (pay(entity, cost, `spillWater`, delta)) { return ERROR; }
                 const actualAmount = Math.min(amount, entity.static.water);
                 changeStatic(entity, { reason: "spillWater", water: -actualAmount });
                 addRain(map, vectorAdd(entity.position, vector), actualAmount);
-                refreshData();
+                refreshData(entity, static, data);
                 return { cost, actualAmount };
             },
 
@@ -284,7 +314,8 @@ const PlantSystem = {
 
             repair(amount) {
                 const cost = amount * 8;
-                if (pay(cost, "repair")) { return ERROR; }
+                if (pay(entity, cost, "repair", delta)) { return ERROR; }
+                refreshData(entity, static, data);
                 changeStatic(entity, { reason: "repair", structure: amount });
             },
 
@@ -301,7 +332,7 @@ const PlantSystem = {
                         || entity.static.water < water) {
                     return ERROR;
                 }
-                if (pay(cost, "split")) {
+                if (pay(entity, cost, "split", delta)) {
                     return ERROR;
                 }
                 changeStatic(entity, { reason: "split", structure: -structure, water: -water, energy: -energy });
@@ -309,6 +340,7 @@ const PlantSystem = {
                     { code, cost: codeSize },
                     { structure, water, energy },
                     JSON.parse(dataString)));
+                refreshData(entity, static, delta);
             }
             // todo: drawImage
         }

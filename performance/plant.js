@@ -60,83 +60,24 @@ function findEntities(entity, list, size) {
 }
 
 /**
- * @template T
- * @param {Cell<T>} entity
- * @param {{ reason: string; water?: number; energy?: number; structure?: number; }} data
- */
-function changeStatic(entity, data) {
-    const { reason, energy, structure, water } = data;
-    
-    if (!entity.log[reason]) {
-        entity.log[reason] = { ...data, count: 1 };
-        return;
-    }
-
-    if (energy) {
-        entity.log[reason].energy = (entity.log[reason].energy || 0) + energy;
-        entity.static.energy += energy;
-    }
-
-    if (structure) {
-        entity.log[reason].structure = (entity.log[reason].structure || 0) + structure;
-        entity.static.structure += structure;
-    }
-
-    if (water) {
-        entity.log[reason].water = (entity.log[reason].water || 0) + water;
-        entity.static.water += water;
-    }
-
-    entity.log[reason].count += 1;
-}
-
-/**
- * @template T
- * @param {Cell<T>} entity
- * @param {number} energy 
- * @param {string} reason 
- * @param {number} delta
- */
-function pay(entity, energy, reason, delta) {
-    energy = Math.ceil(energy * delta);
-    if (entity.static.energy < energy) {
-        return ERROR;
-    }
-    changeStatic(entity, { reason: reason || "Pay", energy: -energy });
-}
-
-/**
- * @template T
- * @param {Cell<T>} entity 
- * @param {CellStatic} static 
- * @param {T} data 
- */
-function refreshData(entity, static, data) {
-    Object.assign(static, entity.static);
-    Object.assign(data, deepCopy(entity.data));
-}
-
-const ERROR = "ERROR";
-
-/**
  * @type {System & {
  * structureCost: number,
  * drainCutoff: number,
- * drain(delta: number, entity: Cell<unknown>, tile: { col: number, row: number }, map: GameMap): void
+ * drain(context: CellContext<unknown>, tile: { col: number, row: number }, map: GameMap): void
  * }} */
 const PlantSystem = {
     structureCost: 0.1,
     drainCutoff: 1,
-    drain(delta, entity, tile, map) {
+    drain(context, tile, map) {
         /**
          * @param {Tile} to
          */
         function doDrain(to) {
-            if (entity.static.water > 0 
+            if (context.entity.static.water > 0 
                 && canSoak(to) 
                 && !to.value
-                && Math.random() < this.drainCutoff * delta) {
-                changeStatic(entity, { reason: "drain", water: -1 });
+                && Math.random() < this.drainCutoff * context.delta) {
+                context.changeStatic("drain", { water: -1 });
                 to.value += 1;
                 return true;
             }
@@ -156,16 +97,16 @@ const PlantSystem = {
             return;
         }
 
-        let static = Object.assign({}, entity.static); // static has only values
-        let data = deepCopy(entity.data);
+        const neighbors = findEntities(entity, map.resources, map.tsize);
+        const context = new CellContext(entity, neighbors, delta, map);
 
         const dataCost = Math.log(JSON.stringify(entity.data).length);
         const upkeep = Math.ceil(entity.static.structure * this.structureCost + dataCost)
             + entity.program.cost;
 
-        if (pay(entity, upkeep, "Upkeep", delta)) {
-            const structure = Math.ceil(upkeep * delta * this.structureCost);
-            changeStatic(entity, { reason: "insufficient-energy", structure: -structure });
+        if (context.pay("upkeep", upkeep)) {
+            const structure = -Math.ceil(upkeep * delta * this.structureCost);
+            context.changeStatic("insufficient-energy", { structure })
         }
 
         const center = entityCenter(entity);
@@ -173,11 +114,9 @@ const PlantSystem = {
             col: center.x / map.tsize | 0,
             row: center.y / map.tsize | 0
         };
-        this.drain(delta, entity, tile, map);
-        
-        const neighbors = findEntities(entity, map.resources, map.tsize);
-        const context = new CellContext(entity, neighbors, delta, map);
-        entity.program.code(static, data, delta, context.controls);
+        this.drain(context, tile, map);
+        context.refreshData();
+        context.run();
     }
 }
 

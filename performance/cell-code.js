@@ -43,6 +43,10 @@ class CellContext {
         Object.assign(this.data, deepCopy(this.entity.data));
     }
 
+    run() {
+        this.entity.program.code(this.static, this.data, this.delta, this.controls);
+    }
+
     /**
      * @param {string} reason 
      * @param {number} amount 
@@ -63,6 +67,8 @@ class CellContext {
             this.entity.log[reason] = { ...values, count: 1 };
             return;
         }
+
+        log.count += 1;
 
         if (values.energy) {
             if (this.entity.static.energy >= -values.energy) {

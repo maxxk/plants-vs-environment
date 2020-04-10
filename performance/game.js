@@ -194,10 +194,10 @@ Game.cycleResources = function(rainProbability, cutoff) {
         let rain = rainProbability * Math.random();
 
         if (rain > cutoff) {
-            addRain(map, { x: i * map.tsize, y: 1 * map.tsize }, Math.round(5 * Math.random() + 4));
+            addRain(map, { x: i * map.tsize, y: 1 * map.tsize }, { x: 0, y: 0 }, Math.round(5 * Math.random() + 4));
         }
     }
-    this.render(true)
+    this.render(0.001)
 }
 
 Game.setPause = function(checkbox) {

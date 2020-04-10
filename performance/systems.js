@@ -277,7 +277,7 @@ const Rain = {
         const count = Math.floor(map.cols*Math.random() * (1 - this.cutoff));
         for (let i = 0; i < count; i++) {
             const x = Math.round(Math.random() * map.cols * map.tsize);
-            addRain(map, { x, y: 1 * map.tsize }, Math.round(5 * Math.random() + 4));
+            addRain(map, { x, y: 1 * map.tsize }, { x: 0, y: 0}, Math.round(5 * Math.random() + 4));
         }
     }
 }
@@ -371,9 +371,3 @@ const GroundSoak = {
         this.stepShift = i;
     }
 }
-
-const SYSTEMS = [
-    Gravity, Wind, RandomDrift,
-    AirResistance, Velocity,
-    GroundSoak, PairwiseCollision, GroundCollision,
-    Reaper, Sun, Rain ];

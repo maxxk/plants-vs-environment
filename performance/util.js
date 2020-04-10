@@ -91,14 +91,18 @@ function addResource(map, resource) {
 }
 
 
-function addRain(map, position, value) {
+/**
+ * 
+ * @param {GameMap} map 
+ * @param {Vector} position 
+ * @param {Vector} velocity
+ * @param {number} value 
+ */
+function addRain(map, position, velocity, value) {
     addResource(map, {
         kind: 'rain',
         position,
-        velocity: {
-            x: 0,
-            y: 0
-        },
+        velocity,
         bounds: {
             x: 8,
             y: 8,
@@ -110,9 +114,10 @@ function addRain(map, position, value) {
     });
 }
 
-
 /**
- * @param {any} object
+ * @template T
+ * @param {T} object 
+ * @returns {T}
  */
 function deepCopy(object) {
     return JSON.parse(JSON.stringify(object));

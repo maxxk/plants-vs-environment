@@ -1,13 +1,13 @@
 type Vector = { x: number, y: number };
 type Rectangle = Vector & { width: number, height: number };
 
-type ResourceKinds = "rain" | "sun";
+type ResourceKind = "rain" | "sun";
 type TileKinds = "ground" | "air" | "sky";
 
 type EntityPosition = { position: Point };
 type Velocity = { velocity: Point };
 type Bound =  { bounds: Vector & { width: number, height: number } };
-type Resource = { kind: ResourceKinds, value: number, photon?: boolean, image?: undefined } & EntityPosition & Velocity & Bound;
+type Resource = { kind: ResourceKind, value: number, photon?: boolean, image?: undefined } & EntityPosition & Velocity & Bound;
 
 type Tile = ({ kind: "air" | "sky", value?: undefined } | { kind: "ground", value: number }) & Vector & {
     color?: string
@@ -19,18 +19,34 @@ type CellStatic = {
     structure: number
 };
 
-type Cell = {
+
+type ApiError = { error: true, ok?: undefined };
+type ApiResult<T> = ApiError | { ok: T, cost: number, error?: undefined };
+
+type Controls = {
+    consume(kind: ResourceKind|"structure", amount: nubmer): ApiResult<{ amount: number }>,
+    produce(kind: ResourceKind|"structure", amount: number, velocity?: Vector): ApiResult<{ amount: number; }>,
+    split<T>(direction: Vector, static: CellStatic, data: T, code?: string): ApiResult<{}>,
+    store(key: string, value: any): ApiResult<{}>,
+    drop(key: string): ApiResult<{}>,
+    getTile(direction: Vector): ApiResult<Tile?>,
+    getNearby(direction: Vector, width: number): ApiResult<Array<Entity>>,
+};
+
+type Program<T> = {
+    code(static: CellStatic, data: T, delta: number, api: Controls): void,
+    cost: number
+};
+
+type Cell<T> = {
     kind: "cell",
     velocity?: undefined,
     photon?: undefined,
     value?: undefined,
     static: CellStatic,
-    data: any,
+    data: T,
     image: HTMLImageElement,
-    program: {
-        code: (static: CellStatic, data: any, delta: number, api: any) => void,
-        cost: number
-    },
+    program: Program<T>,
     age: number,
     log: {
         [reason: string]: {
@@ -42,7 +58,7 @@ type Cell = {
     }
 } & EntityPosition & Bound;
 
-type Entity = Resource | Cell;
+type Entity = Resource | Cell<unknown>;
 
 type GameMap = {
     cols: number,

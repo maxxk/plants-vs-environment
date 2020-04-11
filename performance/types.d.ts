@@ -70,7 +70,8 @@ type GameMap = {
 
     deadPlants: Array<Cell>,
     getTile(layer: number, col: number, row: number): Tile?,
-    getTileAt(v: Vector): Tile?
+    getTileAt(v: Vector): Tile?,
+    setTileAt(v: Vector, value: Tile?): void,
 }
 
 type System = {

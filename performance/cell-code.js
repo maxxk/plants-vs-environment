@@ -1,6 +1,6 @@
 // @ts-check
 
-const ENERGY_PER_PHOTON = 1000;
+const ENERGY_PER_PHOTON = 2000;
 const WATER_PER_PHOTON = 1;
 const ENERGY_TO_STRUCTURE = 32;
 const STRUCTURE_TO_ENERGY = 2;
@@ -206,6 +206,7 @@ class CellContext {
     consumePhoton(resource, amount) {
         const photons = Math.min(amount, resource.value, this.entity.static.water * WATER_PER_PHOTON);
         const water = -Math.ceil(photons/WATER_PER_PHOTON);
+        resource.value -= photons;
         this.changeStatic("consume_photon", { water, energy: photons * ENERGY_PER_PHOTON });
         return photons;
     }

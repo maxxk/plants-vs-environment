@@ -20,6 +20,11 @@ var map = {
         const row = y / this.tsize | 0;
         return this.getTile(0, col, row);
     },
+    setTileAt({ x, y }, value) {
+        const col = x / this.tsize | 0;
+        const row = y / this.tsize | 0;
+        this.layers[0][row * map.cols + col] = value;
+    },
     resources: [], // entity
     deadPlants: [],
 };

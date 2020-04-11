@@ -6,6 +6,7 @@
  * @param {Program<T>} program 
  * @param {Partial<CellStatic>} defaultStatic 
  * @param {T} data 
+ * @param {GameMap} map
  * @returns {Cell<T>}
  */
 function Plant(position, program, defaultStatic, data) {
@@ -17,6 +18,10 @@ function Plant(position, program, defaultStatic, data) {
         energy: 10000,
         water: 1
     }, defaultStatic);
+    const tile = map.getTileAt(position);
+    if (tile && tile.kind === "ground") {
+        map.setTileAt(position, undefined);
+    }
     return {
         kind: "cell",
         position,
@@ -149,10 +154,10 @@ setTimeout(() => {
         }
         if (static.water > 0 && static.energy > 22000 && static.structure >= 1000) {
             const directions = [
-                { x: 24, y: 0 },
-                { x: -24, y: 0},
-                { x: 0, y: 24 },
-                { x: 0, y: -24 }
+                { x: 0, y: 16 },
+                { x: 0, y: -16 },
+                { x: 16, y: 0 },
+                { x: -16, y: 0},
             ];
             for (let direction of directions) {
                 const neighbors = api.getNearby(direction, 1);
@@ -164,12 +169,12 @@ setTimeout(() => {
                 }
             }
         }
-    }, cost: 11 }, {}, {}));
+    }, cost: 11 }, {}, {}, map));
     addResource(map, Plant({ x: 384, y: 432 }, { code: function(static, data, delta, api) {
         api.consume("rain", 1);
         api.consume("sun", 2);
-    }, cost: 7 }, {}, {}));
+    }, cost: 7 }, {}, {}, map));
     addResource(map, Plant({ x: 320, y: 432 }, { code: function(static, data, delta, api) {
-    }, cost: 0 }, {}, {}));
+    }, cost: 0 }, {}, {}, map));
     
 }, 1000);

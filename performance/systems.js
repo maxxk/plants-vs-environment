@@ -133,7 +133,7 @@ const GroundCollision = {
             }
         } else if (entity.kind === "sun") {
             if (tile.value > 0) {
-                const delta = Math.min(tile.value, entity.value);
+                const delta = Math.min(tile.value, Math.ceil(entity.value/2));
                 tile.value -= delta;
             }
             entity.value = 0;

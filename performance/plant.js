@@ -10,6 +10,8 @@
  */
 function Plant(position, program, defaultStatic, data) {
     /** @type {CellStatic} */
+    position.x = Math.round(position.x / map.tsize) * map.tsize;
+    position.y = Math.round(position.y / map.tsize) * map.tsize;
     let static = Object.assign({
         structure: 1000,
         energy: 10000,
@@ -127,7 +129,7 @@ const SYSTEMS = [
     AirResistance, Velocity, PlantSystem ];
 
 setTimeout(() => {
-    addResource(map, Plant({ x: 480, y: 440 }, { code: function(static, data, delta, api) {
+    addResource(map, Plant({ x: 448, y: 432 }, { code: function(static, data, delta, api) {
         if (static.water < 9) {
             if (static.water < 3 || static.energy > 5000) {
                 api.consume("rain", 1);
@@ -162,12 +164,12 @@ setTimeout(() => {
                 }
             }
         }
-    }, cost: 8 }, {}, {}));
-    addResource(map, Plant({ x: 400, y: 440 }, { code: function(static, data, delta, api) {
+    }, cost: 11 }, {}, {}));
+    addResource(map, Plant({ x: 384, y: 432 }, { code: function(static, data, delta, api) {
         api.consume("rain", 1);
         api.consume("sun", 2);
     }, cost: 7 }, {}, {}));
-    addResource(map, Plant({ x: 320, y: 440 }, { code: function(static, data, delta, api) {
+    addResource(map, Plant({ x: 320, y: 432 }, { code: function(static, data, delta, api) {
     }, cost: 0 }, {}, {}));
     
 }, 1000);

@@ -1,10 +1,11 @@
 // @ts-check
 
-const ENERGY_PER_PHOTON = 2000;
-const WATER_PER_PHOTON = 2;
-const ENERGY_TO_STRUCTURE = 2;
-const STRUCTURE_TO_ENERGY = 16;
+const ENERGY_PER_PHOTON = 1000;
+const WATER_PER_PHOTON = 1;
+const ENERGY_TO_STRUCTURE = 32;
+const STRUCTURE_TO_ENERGY = 2;
 const LOOKUP_COST = 16;
+const CONSUME_COST = 2;
 const ARGUMENTS = ["static", "data", "delta", "api"];
 
 
@@ -126,19 +127,21 @@ class CellContext {
      * @param {number} amount 
      */
     consume(kind, amount) {
-        const cost = amount * amount;
+        const cost = (amount +1 ) * CONSUME_COST;
 
         if (kind === "structure") {
             if (this.entity.static.structure < amount) {
                 return { error: true };
             }
-            this.changeStatic(`consume_${kind}`, { structure: -amount, energy: ENERGY_TO_STRUCTURE * amount });
+            this.changeStatic(`consume_${kind}`, { structure: -amount, energy: STRUCTURE_TO_ENERGY * amount });
             return { ok: { amount }, cost: 0 }
         }
 
-        const pay = this.pay(`consume_${kind}`, cost);
+        if (kind !== "sun") {
+            const pay = this.pay(`consume_${kind}`, cost);
+            if (pay) { return pay; }
+        }
         let transfer = amount;
-        if (pay) { return pay; }
         if (kind === "rain") {
             const tile = this.map.getTileAt(entityCenter(this.entity));
             transfer -= this.consumeWater(tile, amount);
@@ -197,7 +200,7 @@ class CellContext {
      */
     produce(kind, amount, velocity) {
         if (kind === "structure") {
-            const cost = amount * STRUCTURE_TO_ENERGY;
+            const cost = amount * ENERGY_TO_STRUCTURE;
             const pay = this.pay("produce_structure", cost);
             if (pay) { return pay; }
             this.changeStatic("produce_structure", { structure: amount });

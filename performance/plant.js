@@ -134,9 +134,9 @@ setTimeout(() => {
             }
         }
         if (static.water > 0) {
-            if (api.consume("sun", 2).error) {
+            if (api.consume("sun", 1).error) {
                 api.consume("structure", 8);
-                api.consume("sun", 2);
+                api.consume("sun", 1);
             }
         } else if (api.consume("rain", 1).error) {
             api.consume("structure", 8);

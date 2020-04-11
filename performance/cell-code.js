@@ -143,8 +143,7 @@ class CellContext {
         }
         let transfer = amount;
         if (kind === "rain") {
-            const tile = this.map.getTileAt(entityCenter(this.entity));
-            transfer -= this.consumeWater(tile, amount);
+            transfer -= this.consumeWaterFromTiles(entityCenter(this.entity), amount);
         }
         
         const resources = this.findNearest({
@@ -163,6 +162,25 @@ class CellContext {
         return { ok: { amount: amount - transfer }, cost };
     }
 
+    /**
+     * 
+     * @param {Vector} position 
+     * @param {number} amount 
+     */
+    consumeWaterFromTiles(position, amount) {
+        let consumed = 0;
+        consumed += this.consumeWater(this.map.getTileAt(position), amount);
+        const offsets = [
+            { x: -this.map.tsize, y: 0},
+            { x: this.map.tsize, y: 0},
+            { x: 0, y: -this.map.tsize },
+            { x: 0, y: this.map.tsize }
+        ];
+        for (let i=0, len=offsets.length; i < len && consumed < amount; i++) {
+            consumed += this.consumeWater(this.map.getTileAt(vectorAdd(position, offsets[i])), 1);
+        }
+        return consumed;
+    }
     
     /**
      * @param {Tile|Entity|undefined} source
@@ -241,7 +259,7 @@ class CellContext {
 
         const dataString = JSON.stringify(data);
         const dataSize = Math.ceil(Math.log(dataString.length));
-        const cost = (10 + program.cost + dataSize + staticData.water * staticData.water) * Math.ceil((measure(direction)*measure(direction)+1)/map.tsize/map.tsize);
+        const cost = (10 + program.cost + dataSize + staticData.water * staticData.water) * Math.ceil((measure(direction)*measure(direction)+1)/this.map.tsize/this.map.tsize);
         if (this.entity.static.structure < staticData.structure
                 || this.entity.static.energy < cost + staticData.energy
                 || this.entity.static.water < staticData.water) {
@@ -252,11 +270,11 @@ class CellContext {
         if (pay) { return pay; }
 
         this.changeStatic("split", { structure: -staticData.structure, water: -staticData.water, energy: -staticData.energy })
-        addResource(map, Plant(vectorAdd(this.entity.position, direction),
+        addResource(this.map, Plant(vectorAdd(this.entity.position, direction),
             program,
             staticData,
             JSON.parse(dataString)));
-        this.refreshData();[]
+        this.refreshData();
     }
 
     store(key, value) {
@@ -301,10 +319,10 @@ class CellContext {
      * @param {Vector} direction 
      */
     getTile(direction) {
-        const cost = Math.ceil(measure(direction)/map.tsize + 1);
+        const cost = Math.ceil(measure(direction)/this.map.tsize + 1);
         const pay = this.pay("drop", cost);
         if (pay) { return pay; }
         
-        return { cost, ok: map.getTileAt(vectorAdd(this.entity.position, direction)) };
+        return { cost, ok: this.map.getTileAt(vectorAdd(this.entity.position, direction)) };
     }
 }

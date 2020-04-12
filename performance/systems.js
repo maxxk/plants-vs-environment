@@ -37,8 +37,8 @@ const Wind = {
         if (entity.velocity && !entity.photon) {
             const probability = Math.random();
             if (probability > this.cutoff) {
-                entity.velocity.x += delta * this.direction.x;
-                entity.velocity.y += delta * this.direction.y;
+                entity.velocity.x += delta * this.direction.x / Math.sqrt(entity.value + 1);
+                entity.velocity.y += delta * this.direction.y / Math.sqrt(entity.value + 1);
             }
         }
     }

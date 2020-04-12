@@ -33,8 +33,10 @@ type Controls = {
     getNearby(direction: Vector, width: number): ApiResult<Array<Entity>>,
 };
 
+type ProgramCode<T> = (static: CellStatic, data: T, delta: number, api: Controls) => void;
+
 type Program<T> = {
-    code(static: CellStatic, data: T, delta: number, api: Controls): void,
+    code: ProgramCode<T>,
     cost: number
 };
 

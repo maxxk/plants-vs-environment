@@ -144,21 +144,18 @@ class CellContext {
         let transfer = amount;
         if (kind === "rain") {
             transfer -= this.consumeWaterFromTiles(entityCenter(this.entity), amount);
-        }
-        
-        const resources = this.findNearest({
-            vector: entityCenter(this.entity),
-            filter: x => x.kind === kind && x.value > 0
-        })
+        } else {
+            const resources = this.findNearest({
+                vector: entityCenter(this.entity),
+                filter: x => x.kind === kind && x.value > 0
+            })
 
-        for (let i = 0, len = resources.length; i < len && transfer > 0; i++) {
-            if (kind === "rain") {
-                transfer -= this.consumeWater(resources[i], transfer);
-            } else if (kind === "sun") {
-                transfer -= this.consumePhoton(resources[i], transfer);
+            for (let i = 0, len = resources.length; i < len && transfer > 0; i++) {
+                if (kind === "sun") {
+                    transfer -= this.consumePhoton(resources[i], transfer);
+                }
             }
         }
-
         return { ok: { amount: amount - transfer }, cost };
     }
 
@@ -306,7 +303,7 @@ class CellContext {
      */
     getNearby(direction, width) {
         let cost = Math.ceil(measure(direction)*width*width + LOOKUP_COST);
-        const pay = this.pay("drop", cost);
+        const pay = this.pay("getNearby", cost);
         if (pay) { return pay; }
 
         const result = this.findNearest({ vector: vectorAdd(entityCenter(this.entity), direction), width });
@@ -321,7 +318,7 @@ class CellContext {
      */
     getTile(direction) {
         const cost = Math.ceil(measure(direction)/this.map.tsize + 1);
-        const pay = this.pay("drop", cost);
+        const pay = this.pay("getTile", cost);
         if (pay) { return pay; }
         
         return { cost, ok: this.map.getTileAt(vectorAdd(this.entity.position, direction)) };

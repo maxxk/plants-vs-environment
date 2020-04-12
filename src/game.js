@@ -25,10 +25,10 @@ Camera.prototype.move = function (delta, dirx, diry) {
 
 Game.load = function () {
     return [
-        Loader.loadImage('tiles', '../assets/bloo.png'),
-        Loader.loadImage('rain', '../assets/orb-blue.png'),
-        Loader.loadImage('sun', '../assets/orb-yellow.png'),
-        Loader.loadImage('generic-plant', '../assets/generic-plant.png'),
+        Loader.loadImage('tiles', 'assets/bloo.png'),
+        Loader.loadImage('rain', 'assets/orb-blue.png'),
+        Loader.loadImage('sun', 'assets/orb-yellow.png'),
+        Loader.loadImage('generic-plant', 'assets/generic-plant.png'),
     ];
 };
 

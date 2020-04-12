@@ -24,7 +24,7 @@ type ApiError = { error: true, ok?: undefined };
 type ApiResult<T> = ApiError | { ok: T, cost: number, error?: undefined };
 
 type Controls = {
-    consume(kind: ResourceKind|"structure", amount: nubmer): ApiResult<{ amount: number }>,
+    consume(kind: ResourceKind|"structure", amount: number): ApiResult<{ amount: number }>,
     produce(kind: ResourceKind|"structure", amount: number, velocity?: Vector): ApiResult<{ amount: number; }>,
     split<T>(direction: Vector, static: CellStatic, data: T, code?: string): ApiResult<{}>,
     store(key: string, value: any): ApiResult<{}>,

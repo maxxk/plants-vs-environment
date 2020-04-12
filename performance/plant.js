@@ -14,7 +14,7 @@ function Plant(position, program, defaultStatic, data) {
     position.y = Math.round(position.y / map.tsize) * map.tsize;
     let static = Object.assign({
         structure: 1000,
-        energy: 10000,
+        energy: 100000,
         water: 1
     }, defaultStatic);
     const tile = map.getTileAt(position);
@@ -111,7 +111,7 @@ const PlantSystem = {
             + entity.program.cost;
 
         if (context.pay("upkeep", upkeep)) {
-            const structure = -Math.ceil(upkeep * delta * this.structureCost);
+            const structure = -Math.ceil(upkeep * delta * this.structureCost / 2);
             context.changeStatic("insufficient-energy", { structure })
         }
 
@@ -144,8 +144,9 @@ function makeProgram(fn) {
     }
 }
 
-setTimeout(() => {
-    addResource(map, Plant({ x: 448, y: 432 }, makeProgram(Splitter), {}, {}, map));
+function addPlants(){
+    addResource(map, Plant({ x: 448, y: 432 }, makeProgram(Roots), {}, {}, map));
+    addResource(map, Plant({ x: 448, y: 448 }, makeProgram(Roots), {}, { root: true }, map));
     addResource(map, Plant({ x: 384, y: 432 }, makeProgram(Eater), {}, {}, map));
     addResource(map, Plant({ x: 320, y: 432 }, makeProgram(NoOp), {}, {}, map));
-}, 1000);
+};

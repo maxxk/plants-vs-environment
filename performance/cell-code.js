@@ -1,6 +1,6 @@
 // @ts-check
 
-const ENERGY_PER_PHOTON = 2000;
+const ENERGY_PER_PHOTON = 10000;
 const WATER_PER_PHOTON = 1;
 const ENERGY_TO_STRUCTURE = 32;
 const STRUCTURE_TO_ENERGY = 2;
@@ -144,16 +144,17 @@ class CellContext {
         let transfer = amount;
         if (kind === "rain") {
             transfer -= this.consumeWaterFromTiles(entityCenter(this.entity), amount);
-        } else {
-            const resources = this.findNearest({
-                vector: entityCenter(this.entity),
-                filter: x => x.kind === kind && x.value > 0
-            })
+        }   
+        const resources = this.findNearest({
+            vector: entityCenter(this.entity),
+            filter: x => x.kind === kind && x.value > 0
+        })
 
-            for (let i = 0, len = resources.length; i < len && transfer > 0; i++) {
-                if (kind === "sun") {
-                    transfer -= this.consumePhoton(resources[i], transfer);
-                }
+        for (let i = 0, len = resources.length; i < len && transfer > 0; i++) {
+            if (kind === "sun") {
+                transfer -= this.consumePhoton(resources[i], transfer);
+            } else if (kind === "rain" && Math.random() > 0.8) {
+                transfer -= this.consumeWater(resources[i], 1);
             }
         }
         return { ok: { amount: amount - transfer }, cost };
@@ -230,7 +231,7 @@ class CellContext {
             if (pay) { return pay; }
             const water = Math.min(amount, this.entity.static.water);
             this.changeStatic("produce_rain", { water: -water });
-            addRain(this.map, this.entity.position, velocity, water);
+            addRain(this.map, { ...this.entity.position }, velocity, water);
             return { ok: { amount: water }, cost };
         }
         

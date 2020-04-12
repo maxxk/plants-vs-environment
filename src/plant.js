@@ -150,3 +150,5 @@ function addPlants(){
     addResource(map, Plant({ x: 384, y: 432 }, makeProgram(Eater), {}, {}, map));
     addResource(map, Plant({ x: 320, y: 432 }, makeProgram(NoOp), {}, {}, map));
 };
+
+setTimeout(addPlants, 2000);

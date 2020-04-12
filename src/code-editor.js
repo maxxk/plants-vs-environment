@@ -19,11 +19,14 @@ const jsResult = Atom(value => {
     document.getElementById("code-status").innerText = value
 }, "No data");
 
-editor.on("changes", debounce(function(cm) {
+function refreshCode(cm) {
     try {
-        const size = codeMeasure(cm.getDoc().getValue());
+        const size = codeMeasure(new Function(cm.getDoc().getValue()).toString());
         jsResult(`Complexity: ${Math.ceil(2*Math.log(size))}`)
     } catch {
         jsResult("Parse error")
     }
-}))
+}
+
+editor.on("changes", debounce(refreshCode))
+refreshCode(editor);

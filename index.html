@@ -1,42 +1,72 @@
 <!doctype html>
 <html>
 <head>
-    <title>Tilemaps examples</title>
+    <title>Plants vs Environment</title>
     <meta charset="utf-8">
+    <link rel="stylesheet" href="external/codemirror.css" type="text/css">
+    <script src="external/codemirror.js"></script>
+    <script src="external/matchbrackets.js"></script>
+    <script src="external/continuecomment.js"></script>
+    <script src="external/comment.js"></script>
+    <script src="external/javascript.js"></script>
+    <script src="external/acorn.js"></script>
+    <script src="external/acorn-walk.js"></script>
+
     <link rel="stylesheet" href="styles.css" type="text/css">
+    <script src="src/common.js"></script>
+    <script src="src/util.js"></script>
+    <script src="src/map.js"></script>
+    <script src="src/systems.js"></script>
+    <script src="src/cell-code.js"></script>
+    <script src="src/plant-examples.js"></script>
+    <script src="src/plant.js"></script>
+    <script src="src/game.js"></script>
 </head>
 <body>
 
-<header class="main-header">
-    <h1><a href="index.html">Tilemaps examples</a></h1>
-    <p class="subtitle">Index</p>
+<header>
+    <p>Offcanvas drawing</p>
 </header>
 
 <div class="main-wrapper">
-    <p>This is a collection of demos and examples on how to use and implement
-    <strong>tilemaps</strong> in HTML 5 games.</p>
-    <p>It is recommended to also read the companion articles at the
-    <a href="https://developer.mozilla.org/en-US/docs/Games/Techniques/Tilemaps" target="_top">Mozilla Developer Network</a>.
-    </p>
+    <canvas id="demo" width="512" height="512"></canvas>
 
-    <nav>
-        <h1>Square tiles</h1>
-        <ul>
-            <li><a href="square/no-scroll.html">Non-scrolling tilemaps</a></li>
-            <li><a href="square/layers.html">Tilemaps with layers</a></li>
-            <li><a href="square/scroll.html">Scrolling tilemaps</a></li>
-            <li><a href="square/logic-grid.html">Collisions in tilemaps</a></li>
-        </ul>
-        <h1>Performance improvements</h1>
-        <ul>
-            <li><a href="performance/offcanvas.html">Offcanvas drawing</a></li>
-        </ul>
-        <h1>Isometric tiles</h1>
-        <p>Coming soon.</p>
-    </nav>
+    <div>
+        <button onclick="addPlants()">Plant</button>
+        <input type="checkbox" id="pause" oninput="Game.setPause(this)"><label for="pause">Pause</label>
+    </div>
 
-    <footer class="main-footer">
-        <p>Source code on <a href="https://github.com/mozdevs/gamedev-js-tiles" target="_top">the Github repository</a>.</p>
+    <div class="code-editor">
+        <textarea id="code">
+// Editor is not working yet.
+// You can use it to preview the complexity for your plant code.
+// Plants are defined at src/plant-examples.js
+// and created at the end of src/plants.js
+api.consume("rain", 1);
+api.consume("sun", 2);</textarea>
+
+        <div id="code-status"></div>
+
+        <div>
+            Defined variables: static, data, delta, api
+            <dl>
+                <dt>static</dt>
+                <dd>static plant data copy: structure, water, enertgy</dd>
+                <dt>data</dt>
+                <dd>user-state</dd>
+                <dt>delta</dt>
+                <dd>time since last update</dd>
+                <dt>api</dt>
+                <dd>external functions</dd>
+            </dl>
+        </div>
+
+        <script src="src/code-editor.js"></script>
+    </div>
+
+    <footer>
+        <p>Source code on <a href="https://github.com/maxxk/plants-vs-environment">the Github repository</a>.</p>
+        <p>Based on example from <a href="https://github.com/mozdevs/gamedev-js-tiles">MDN Tilemaps Tutorial</a>.</p>
     </footer>
 </div><!-- main wrapper -->
 

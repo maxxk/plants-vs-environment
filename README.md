@@ -1,6 +1,8 @@
 # Plants vs Environment simulator
 
-[Русский](README.ru.md)
+[На русском](README.ru.md)
+
+![](gameplay.gif)
 
 Inspired, in a way, by [Dwarf Fortress](http://bay12games.com/dwarves/),
 based on the idea of a game for teaching programming.
@@ -36,28 +38,28 @@ The rain dampens the soil, moisture spreads through the ground.
 
 ### Intended to be done
 
-- [] the third resource (“glucose”) for energy transmission and message passing, or instead the ability to emit photons
-- [] complete the editor
-- [] cell selection with the cursor, cell controls
-- [] manual cell control
-- [] procedural landscape generation
-- [] simulation settings
-- [] cell image generation
+- [ ] the third resource (“glucose”) for energy transmission and message passing, or instead the ability to emit photons
+- [ ] complete the editor
+- [ ] cell selection with the cursor, cell controls
+- [ ] manual cell control
+- [ ] procedural landscape generation
+- [ ] simulation settings
+- [ ] cell image generation
 
 ### Could be added in the next version if it were
 
-- [] “plot”, training, missions
-- [] changing weather
-- [] mechanical interaction between cells (connections, movement, gravity and wind, "dandelions")
-- [] cell damage due to dryness or high humidity
-- [] cell specialization in terms of increased efficiency of specific actions? (will likely complicate the game too much)
-- [] MMO elements (e.g. random "contamination" by cells with a different code
+- [ ] “plot”, training, missions
+- [ ] changing weather
+- [ ] mechanical interaction between cells (connections, movement, gravity and wind, "dandelions")
+- [ ] cell damage due to dryness or high humidity
+- [ ] cell specialization in terms of increased efficiency of specific actions? (will likely complicate the game too much)
+- [ ] MMO elements (e.g. random "contamination" by cells with a different code
 or intersections with alien "worlds" along the Z axis,
 arena)
-- [] instead of JavaScript, use some machine code (Forth machine or DCPU-16) and spend energy for the program’s clock cycles or execute a certain number of program clocks in a simulation step
-- [] "unfriendly" interactions between cells (destruction, stealing the energy or water)
-- [] new resource - “chemicals” in the soil
-- [] generating images with code + data (hash visualization)
+- [ ] instead of JavaScript, use some machine code (Forth machine or DCPU-16) and spend energy for the program’s clock cycles or execute a certain number of program clocks in a simulation step
+- [ ] "unfriendly" interactions between cells (destruction, stealing the energy or water)
+- [ ] new resource - “chemicals” in the soil
+- [ ] generating images with code + data (hash visualization)
 
 ## Management program
 
@@ -80,7 +82,7 @@ type Controls = {
     split<T>(direction: { x: number, y: number }, static: { water: number, structure: number, energy: number }, data: T, code?: string),
     // Write data
     store(key: string, value: any),
-    // Delete data (so as not to spend constant energy on maintaining them)
+    // Delete data (to stop spending an energy for maintaining it)
     drop(key: string),
     // Get map cell information regarding cell position
     getTile(direction: { x: number, y: number } ),

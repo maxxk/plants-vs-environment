@@ -1,5 +1,9 @@
 # Симулятор растений Plants vs Environment
 
+[In English](README.md)
+
+![](gameplay.gif)
+
 Вдохновлён, в некотором смысле, игрой [Dwarf Fortress](http://bay12games.com/dwarves/),
 но задуман для обучения программированию в игровой форме.
 

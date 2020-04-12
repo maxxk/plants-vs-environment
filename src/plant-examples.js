@@ -2,7 +2,7 @@
 
 
 /** @type {ProgramCode<{}>} */
-function NoOp() {}
+function NoOp(static, data, delta, api) {}
 
 /** @type {ProgramCode<{}>} */
 function Eater(static, data, delta, api) {
@@ -53,7 +53,7 @@ function Splitter(static, data, delta, api) {
 function Roots(static, data, delta, api) {
     if (!data.root) {
         if (static.water < 9) {
-            if (static.water < 3 || static.energy > 50000) {
+            if (static.water < 3 || static.energy > 5000) {
                 api.consume("rain", 1);
             }
         }
@@ -66,10 +66,10 @@ function Roots(static, data, delta, api) {
             api.consume("structure", 8);
             api.consume("rain", 1);
         }
-        if (static.water > 0 && static.energy > 100000 && static.structure < 1000) {
+        if (static.water > 0 && static.energy > 10000 && static.structure < 1000) {
             api.produce("structure", 8);
         }
-        if (static.water > 0 && static.energy > 220000 && static.structure >= 1000) {
+        if (static.water > 0 && static.energy > 22000 && static.structure >= 1000) {
             const directions = [
                 { x: 0, y: 16 },
                 { x: 0, y: -16 },
@@ -94,7 +94,7 @@ function Roots(static, data, delta, api) {
             if (static.energy < 100) {
                 api.consume("structure", 8);
             }
-            if (static.energy > 100000 && static.structure < 1000) {
+            if (static.energy > 10000 && static.structure < 1000) {
                 api.produce("structure", 8)
             }
             api.consume("rain", 9 - static.water);

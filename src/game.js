@@ -169,7 +169,7 @@ Game._drawResources = function() {
         } else if (resource.kind === "cell") {
             context.fillText(resource.static.structure/100|0, x | 0, y);
             context.fillText(resource.static.water, x + map.tsize | 0, y);
-            context.fillText(resource.static.energy/1000|0, x, y + map.tsize);
+            context.fillText(resource.static.energy/100|0, x, y + map.tsize);
         }
     }
 }

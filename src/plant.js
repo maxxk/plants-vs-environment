@@ -14,7 +14,7 @@ function Plant(position, program, defaultStatic, data) {
     position.y = Math.round(position.y / map.tsize) * map.tsize;
     let static = Object.assign({
         structure: 1000,
-        energy: 100000,
+        energy: 10000,
         water: 1
     }, defaultStatic);
     const tile = map.getTileAt(position);

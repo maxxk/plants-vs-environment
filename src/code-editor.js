@@ -22,7 +22,7 @@ const jsResult = Atom(value => {
 function refreshCode(cm) {
     try {
         const size = codeMeasure(new Function(cm.getDoc().getValue()).toString());
-        jsResult(`Complexity: ${Math.ceil(2*Math.log(size))}`)
+        jsResult(`Complexity: ${size}`)
     } catch {
         jsResult("Parse error")
     }

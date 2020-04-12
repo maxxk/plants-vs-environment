@@ -1,6 +1,6 @@
 // @ts-check
 
-const ENERGY_PER_PHOTON = 10000;
+const ENERGY_PER_PHOTON = 1000;
 const WATER_PER_PHOTON = 1;
 const ENERGY_TO_STRUCTURE = 32;
 const STRUCTURE_TO_ENERGY = 2;

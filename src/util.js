@@ -135,14 +135,14 @@ const debounce = (callback, delay = 250) => {
 }
 
 function astSize(ast) {
-    const state = { size: 0 };
+    let size = 0;
     acorn.walk.full(ast, () => {
-        state.size += 1;
+        size += 1;
     });
-    return state.size;
+    return size;
 }
 
 function codeMeasure(code) {
     const ast = acorn.parse(code);
-    return astSize(ast);
+    return Math.sqrt(astSize(ast))|0;
 }

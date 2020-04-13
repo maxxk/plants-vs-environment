@@ -88,8 +88,9 @@ function Roots(static, data, delta, api) {
             }
         }
     } else {
-        if (static.water > 3) {
-            api.produce("rain", static.water - 3, { x: 0, y: -64 });
+        if (static.water > 6 && (data.delta || 1) >= 1) {
+            api.store("delta", 0);
+            api.produce("rain", 1, { direction: { x: 0, y: -16 } });
         } else {
             if (static.energy < 100) {
                 api.consume("structure", 8);
@@ -97,8 +98,11 @@ function Roots(static, data, delta, api) {
             if (static.energy > 10000 && static.structure < 1000) {
                 api.produce("structure", 8)
             }
-            api.consume("rain", 9 - static.water);
             api.consume("sun", 1);
+            api.consume("rain", 9 - static.water);
+            if ((data.delta || 0) < 1) {
+                api.store("delta", (data.delta || 0) + delta);
+            }
         }
     }
 }

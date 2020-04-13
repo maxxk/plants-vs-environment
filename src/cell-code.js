@@ -213,9 +213,9 @@ class CellContext {
      * 
      * @param {"rain"|"structure"} kind 
      * @param {number} amount 
-     * @param {Vector?} velocity?
+     * @param {{ velocity?: Vector, direction?: Vector }} options?
      */
-    produce(kind, amount, velocity) {
+    produce(kind, amount, options) {
         if (kind === "structure") {
             const cost = amount * ENERGY_TO_STRUCTURE;
             const pay = this.pay("produce_structure", cost);
@@ -225,13 +225,18 @@ class CellContext {
         }
     
         if (kind === "rain") {
-            velocity = velocity || { x: 0, y: 0 }
-            const cost = Math.ceil(amount * amount * (measure(velocity) + 1) * (measure(velocity) + 1) / 2);
+            if (!options) { options = { velocity: { x: 0, y: 0 }, direction: { x: 0, y: 0 } } }
+            const velocity = options.velocity || { x: 0, y: 0 }
+            const direction = options.direction || { x: 0, y: 0 };
+            let measures = measure(velocity) * measure(velocity) + measure(direction) * measure(direction);
+            measures /= this.map.tsize * this.map.tsize;
+            measures += 1;
+            const cost = Math.ceil(amount * amount * measures / 2);
             const pay = this.pay("produce_rain", cost);
             if (pay) { return pay; }
             const water = Math.min(amount, this.entity.static.water);
             this.changeStatic("produce_rain", { water: -water });
-            addRain(this.map, { ...this.entity.position }, velocity, water);
+            addRain(this.map, vectorAdd(this.entity.position, direction), velocity, water);
             return { ok: { amount: water }, cost };
         }
         

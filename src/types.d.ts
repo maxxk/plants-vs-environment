@@ -25,10 +25,10 @@ type ApiResult<T> = ApiError | { ok: T, cost: number, error?: undefined };
 
 type Controls = {
     consume(kind: ResourceKind|"structure", amount: number): ApiResult<{ amount: number }>,
-    produce(kind: ResourceKind|"structure", amount: number, velocity?: Vector): ApiResult<{ amount: number; }>,
+    produce(kind: ResourceKind|"structure", amount: number, options?: { velocity?: Vector, direction?: Vector }): ApiResult<{ amount: number; }>,
     split<T>(direction: Vector, static: CellStatic, data: T, code?: string): ApiResult<{}>,
-    store(key: string, value: any): ApiResult<{}>,
-    drop(key: string): ApiResult<{}>,
+    store(key: keyof T, value: T[key]): ApiResult<{}>,
+    drop(key: keyof T): ApiResult<{}>,
     getTile(direction: Vector): ApiResult<Tile?>,
     getNearby(direction: Vector, width: number): ApiResult<Array<Entity>>,
 };

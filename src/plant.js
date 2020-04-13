@@ -72,7 +72,7 @@ function findEntities(entity, list, size) {
  * drain(context: CellContext<unknown>, tile: { col: number, row: number }, map: GameMap): void
  * }} */
 const PlantSystem = {
-    structureCost: 0.1,
+    structureCost: 0.01,
     drainCutoff: 1,
     drain(context, tile, map) {
         /**

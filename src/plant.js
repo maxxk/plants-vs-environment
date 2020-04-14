@@ -72,7 +72,7 @@ function findEntities(entity, list, size) {
  * drain(context: CellContext<unknown>, tile: { col: number, row: number }, map: GameMap): void
  * }} */
 const PlantSystem = {
-    structureCost: 0.01,
+    structureCost: 0.05,
     drainCutoff: 1,
     drain(context, tile, map) {
         /**
@@ -146,9 +146,9 @@ function makeProgram(fn) {
 
 function addPlants(){
     addResource(map, Plant({ x: 448, y: 432 }, makeProgram(Roots), {}, {}, map));
-    addResource(map, Plant({ x: 448, y: 448 }, makeProgram(Roots), {}, { root: true }, map));
+    //addResource(map, Plant({ x: 448, y: 448 }, makeProgram(Roots), {}, { root: true }, map));
     addResource(map, Plant({ x: 384, y: 432 }, makeProgram(Eater), {}, {}, map));
-    addResource(map, Plant({ x: 320, y: 432 }, makeProgram(NoOp), {}, {}, map));
+    addResource(map, Plant({ x: 320, y: 432 }, makeProgram(RootsLeaves), {}, {}, map));
 };
 
 setTimeout(addPlants, 2000);

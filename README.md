@@ -38,7 +38,7 @@ The rain dampens the soil, moisture spreads through the ground.
 
 ### Intended to be done
 
-- [ ] the third resource (“glucose”) for energy transmission and message passing, or instead the ability to emit photons
+- [x] the third resource (“glucose”) for energy transmission and message passing, or instead the *ability to emit photons*
 - [ ] complete the editor
 - [ ] cell selection with the cursor, cell controls
 - [ ] manual cell control

@@ -228,7 +228,8 @@ const PairwiseCollision = {
  * normalAngle: number,
  * step: number,
  * cutoff: number,
- * velocity: number
+ * velocity: number,
+ * getVelocity(): Vector,
  * }} */
 const Sun = {
     maxNormalAngle: 0.8,
@@ -236,6 +237,12 @@ const Sun = {
     step: 0.002,
     cutoff: 0.97,
     velocity: 8*map.tsize,
+    getVelocity() {
+        return {
+            x: this.velocity * Math.sin(this.normalAngle),
+            y: this.velocity * Math.cos(this.normalAngle)
+        }
+    },
     update(delta, entities, map) {
         this.normalAngle -= this.step;
         if (this.normalAngle < -Math.PI/2) {
@@ -247,27 +254,16 @@ const Sun = {
         const count = Math.floor(3*map.cols*Math.random() * (1 - this.cutoff));
         for (let i = 0; i < count; i++) {
             const x = Math.round((3 * Math.random() - 2) * map.cols * map.tsize);
-            addResource(map, {
-                kind: 'sun',
-                position: {
-                    x: x,
-                    y: 0,
-                },
-                velocity: {
-                    x: this.velocity * Math.sin(this.normalAngle),
-                    y: this.velocity * Math.cos(this.normalAngle)
-                },
-                photon: true,
-                bounds: {
-                    x: 8,
-                    y: 8,
-                    width: 4,
-                    height: 4,
-                },
-                value: Math.round(5 * Math.random() + 4)
-            });
+            const position = { x, y: 0 };
+            const value = Math.round(5 * Math.random() + 4);
+            addSun(map, position, this.getVelocity(), value);
         }
     },
+    apply(delta, entity) {
+        if (entity.kind === "sun" && measure(entity.velocity) < this.velocity) {
+            entity.velocity = vectorAdd(entity.velocity, this.getVelocity());
+        }
+    }
 }
 
 /** @type { System & { cutoff: number } } */

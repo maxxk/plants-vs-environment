@@ -224,22 +224,43 @@ class CellContext {
             return { ok: { amount }, cost }
         }
     
-        if (kind === "rain") {
-            if (!options) { options = { velocity: { x: 0, y: 0 }, direction: { x: 0, y: 0 } } }
+        if (kind === "rain" || kind === "sun") {
+            let cost;
+            if (!options) { options = {}; }
             const velocity = options.velocity || { x: 0, y: 0 }
             const direction = options.direction || { x: 0, y: 0 };
             let measures = measure(velocity) * measure(velocity) + measure(direction) * measure(direction);
             measures /= this.map.tsize * this.map.tsize;
-            measures += 1;
-            const cost = Math.ceil(amount * amount * measures / 2);
-            const pay = this.pay("produce_rain", cost);
+            if (kind === "sun") {
+                measures += ENERGY_PER_PHOTON;
+            } else {
+                measures += 1;
+            }
+
+            
+            cost = Math.ceil(amount * amount * measures / 2);
+            
+            if (kind === "rain" && this.entity.static.water < amount) {
+                return { error: true };
+            }
+            if (kind === "sun" && this.entity.static.energy < cost + ENERGY_PER_PHOTON * amount) {
+                return { error: true };
+            }
+
+            const pay = this.pay(`produce_${kind}`, cost);
             if (pay) { return pay; }
-            const water = Math.min(amount, this.entity.static.water);
-            this.changeStatic("produce_rain", { water: -water });
-            addRain(this.map, vectorAdd(this.entity.position, direction), velocity, water);
-            return { ok: { amount: water }, cost };
+
+            if (kind === "rain") {
+                const water = Math.min(amount, this.entity.static.water);
+                this.changeStatic(`produce_${kind}`, { water: -water });
+                addRain(this.map, vectorAdd(this.entity.position, direction), velocity, water);
+                return { ok: { amount: water }, cost };
+            } else if (kind === "sun") {
+                const energy = ENERGY_PER_PHOTON * amount;
+                this.changeStatic(`produce_${kind}`, { energy: -energy });
+                addSun(this.map, vectorAdd(this.entity.position, direction), velocity, amount);
+            }
         }
-        
     }
 
     /**

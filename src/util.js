@@ -115,6 +115,30 @@ function addRain(map, position, velocity, value) {
 }
 
 /**
+ * @param {GameMap} map
+ * @param {Vector} position
+ * @param {Vector} velocity
+ * @param {number} value
+ * @param {any} data?
+ */
+function addSun(map, position, velocity, value, data) {
+    addResource(map, {
+        kind: 'sun',
+        position,
+        velocity,
+        photon: true,
+        bounds: {
+            x: 8,
+            y: 8,
+            width: 4,
+            height: 4,
+        },
+        value,
+        data
+    });
+}
+
+/**
  * @template T
  * @param {T} object 
  * @returns {T}

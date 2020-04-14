@@ -75,7 +75,7 @@ function Roots(static, data, delta, api) {
             const neighbors = api.getNearby(direction, 1);
             if (neighbors.ok) {
                 const cell = neighbors.ok.filter(x => x.kind === "cell");
-                if (cell.length === 0 && static.energy > 22000) {
+                if (cell.length === 0 && static.energy > 15000) {
                     api.split(direction,
                         { water: Math.ceil(static.water/2), energy: Math.ceil(static.energy/2), structure: Math.ceil(static.structure/2) },
                         {});
@@ -83,6 +83,59 @@ function Roots(static, data, delta, api) {
                 } else if (cell.length > 0 && cell[0].kind === "cell" && cell[0].static.water < static.water - 1) {
                     api.produce("rain", 1, { direction });
                     break;
+                }
+            }
+        }
+    }
+}
+
+/** @type {ProgramCode<{split?: boolean}>} */
+function RootsLeaves(static, data, delta, api) {
+    if (static.water > 0 && api.consume("sun", 1).error) {
+        api.consume("structure", 8);
+        api.consume("sun", 1);
+    }
+    if (static.water < 9 && (static.water < 3 || static.energy > 5000)) {
+        if (!api.consume("rain", 1).ok) {
+            api.consume("structure", 8);
+            api.consume("rain", 1);
+        }
+    }
+    if (static.water > 0 && static.energy > 10000 && static.structure < 1000) {
+        api.produce("structure", 8);
+    }
+
+    const canGiveWater = static.water > 3 && static.energy > 4000;
+    const canGiveEnergy = static.energy > 4000 && static.structure > 500;
+    const canSplit = static.structure >= 1000 && static.water > 3 && static.energy > 10000 && (!data.split || static.water > 5 && static.energy > 15000);
+    if (canGiveWater || canGiveEnergy || canSplit) {
+        const directions = [
+            data.split ? { x: 0, y: -16 } : { x: 0, y: 16 },
+            data.split ? { x: 0, y: 16 } : { x: 0, y: -16 },
+            { x: 16, y: 0 },
+            { x: -16, y: 0},
+        ];
+        for (let direction of directions) {
+            const neighbors = api.getNearby(direction, 1);
+            if (neighbors.ok) {
+                const cell = neighbors.ok.filter(x => x.kind === "cell");
+                if (cell.length === 0 && canSplit) {
+                    api.split(direction,
+                        { water: Math.ceil(static.water/2), energy: Math.ceil(static.energy/2), structure: Math.ceil(static.structure/2) },
+                        {});
+                    if (!data.split) {
+                        api.store("split", true);
+                    }
+                    break;
+                } else if (cell.length > 0 && cell[0].kind === "cell") {
+                    if (cell[0].static.water < static.water - 1 && canGiveWater) {
+                        api.produce("rain", 1, { direction });
+                        break;
+                    }
+                    if (cell[0].static.energy < static.energy - 3000 && canGiveEnergy) {
+                        api.produce("sun", 1, { direction });
+                        break;
+                    }
                 }
             }
         }

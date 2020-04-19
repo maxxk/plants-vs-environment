@@ -50,11 +50,14 @@
                 </label>
             </fieldset>
     </div>
+    </form>
 
+    <form name="codeEditor">
     <div class="code-editor">
         <textarea id="code">
 // Editor is working!
 // Try it by clicking "add plant" above
+// To see more examples click on "Load" checkbox below
 api.consume("rain", 1);
 api.consume("sun", 2);</textarea>
 
@@ -72,6 +75,18 @@ api.consume("sun", 2);</textarea>
                 <dt>api</dt>
                 <dd>external functions</dd>
             </dl>
+        </div>
+
+        <div>
+            <input type="checkbox" class="hide-control" id="showLoadDialog" autocomplete="off">
+            <label for="showLoadDialog">
+                Load
+            </label>
+            <div class="hide-target db">
+                <select name="loadName" size=4>
+                </select>
+                <input type="button" name="load" value="Load" />
+            </div>
         </div>
 
         <script src="src/lens.js"></script>

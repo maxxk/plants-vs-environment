@@ -36,3 +36,11 @@ fieldset {
     padding: 0;
     border: none;
 }
+
+input.hide-control ~ .hide-target {
+    display: none;
+}
+
+input.hide-control:checked ~ .hide-target.db {
+    display: block;
+}

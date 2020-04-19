@@ -2,8 +2,13 @@ const editor = CodeMirror.fromTextArea(document.getElementById("code"), {
     lineNumbers: true,
     matchBrackets: true,
     continueComments: "Enter",
-    extraKeys: {"Ctrl-Q": "toggleComment"}
+    extraKeys: {"Ctrl-Q": "toggleComment"},
 });
+
+const savedCode = localStorage.getItem("currentCode");
+if (savedCode) {
+    editor.getDoc().setValue(savedCode)
+}
 
 
 const ViewModel = new Atom({
@@ -12,6 +17,13 @@ const ViewModel = new Atom({
     codeError: false,
     pause: false,
     mouseAction: undefined,
+    examples: {
+        NoOp,
+        Eater,
+        Splitter,
+        Roots,
+        RootsLeaves
+    }
 })
 
 ViewModel.lens("code").on(code => {
@@ -21,6 +33,7 @@ ViewModel.lens("code").on(code => {
     } catch (e) {
         ViewModel.lens("complexity").set(e);
     }
+    localStorage.setItem("currentCode", code);
 })
 
 editor.on("changes", throttle(cm => ViewModel.lens("code").set(cm.getDoc().getValue()), 500));
@@ -58,6 +71,23 @@ ViewModel.lens("codeError").on(codeError => {
         ViewModel.lens("mouseAction").set("plant");
     }
     document.querySelector("input[name=mouseAction][value=plant]").disabled = codeError;
+})
+
+const loadOptions = document.querySelector("form[name=codeEditor] select[name=loadName]");
+const examples = ViewModel.get().examples;
+for (const key of Object.keys(examples)) {
+    const option = document.createElement("option");
+    option.value = key;
+    option.text = key;
+    loadOptions.appendChild(option);
+}
+
+document.querySelector("form[name=codeEditor] input[name=load]").addEventListener("click", function(e) {
+    const name = document.forms.codeEditor.loadName.value;
+    const source = ViewModel.get().examples[name].toString();
+    
+    editor.getDoc().setValue(source.substring(source.indexOf("{") + 1, source.lastIndexOf("}")));
+    e.preventDefault();
 })
 
 const mainCanvas = document.getElementById("demo");

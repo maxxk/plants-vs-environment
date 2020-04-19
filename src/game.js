@@ -51,6 +51,7 @@ Game.init = function () {
     this.layerCanvas = map.layers.map(newCanvasLayer);
 
     this.resourceCanvas = newCanvasLayer();
+    this.uiCanvas = newCanvasLayer();
 
     this.systemsApply = [];
     this.systemsUpdate = [];
@@ -174,6 +175,11 @@ Game._drawResources = function() {
     }
 }
 
+Game.renderUI = function() {
+    UI.drawUI(this.uiCanvas);
+    this.ctx.drawImage(this.uiCanvas, 0, 0);
+}
+
 Game.render = function (force) {
     // re-draw map if there has been scroll
     if (this.hasScrolled || force || !this.pause && map.resources.length > 0) {
@@ -183,7 +189,7 @@ Game.render = function (force) {
 
     // draw the map layers into game context
     this.ctx.drawImage(this.layerCanvas[0], 0, 0);
-    this.ctx.drawImage(this.resourceCanvas, 0, 0)
+    this.ctx.drawImage(this.resourceCanvas, 0, 0);
     //this.ctx.drawImage(this.layerCanvas[1], 0, 0);
 };
 
@@ -200,6 +206,3 @@ Game.cycleResources = function(rainProbability, cutoff) {
     this.render(0.001)
 }
 
-Game.setPause = function(checkbox) {
-    this.pause = checkbox.checked;
-}

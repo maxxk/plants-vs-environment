@@ -119,7 +119,7 @@ function addRain(map, position, velocity, value) {
  * @param {Vector} position
  * @param {Vector} velocity
  * @param {number} value
- * @param {any} data?
+ * @param {any?} data?
  */
 function addSun(map, position, velocity, value, data) {
     addResource(map, {
@@ -147,16 +147,32 @@ function deepCopy(object) {
     return JSON.parse(JSON.stringify(object));
 }
 
-const debounce = (callback, delay = 250) => {
-    let timeoutId
-    return (...args) => {
-        clearTimeout(timeoutId)
-        timeoutId = setTimeout(() => {
-            timeoutId = null
-            callback(...args)
-        }, delay);
-    }
-}
+
+function throttle(func, wait) {
+    let arg, result;
+    let timeout = undefined;
+    let previous = 0;
+    const later = function() {
+        previous = Date.now();
+        timeout = undefined;
+        result = func(arg);
+    };
+    return function(a) {
+        const now = Date.now();
+        const remaining = wait - (now - previous);
+        arg = a;
+        if (remaining <= 0 || remaining > wait) {
+            if (timeout) {
+                clearTimeout(timeout);
+                timeout = undefined;
+            }
+            later();
+        } else if (!timeout) {
+            timeout = setTimeout(later, remaining);
+        }
+        return result;
+    };
+};
 
 function astSize(ast) {
     let size = 0;

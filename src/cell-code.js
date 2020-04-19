@@ -211,7 +211,7 @@ class CellContext {
 
     /**
      * 
-     * @param {"rain"|"structure"} kind 
+     * @param {"rain"|"structure"|"sun"} kind 
      * @param {number} amount 
      * @param {{ velocity?: Vector, direction?: Vector }} options?
      */

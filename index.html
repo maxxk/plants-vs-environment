@@ -20,6 +20,7 @@
     <script src="src/cell-code.js"></script>
     <script src="src/plant-examples.js"></script>
     <script src="src/plant.js"></script>
+    <script src="src/ui-system.js"></script>
     <script src="src/game.js"></script>
 </head>
 <body>
@@ -31,17 +32,29 @@
 <div class="main-wrapper">
     <canvas id="demo" width="512" height="512"></canvas>
 
+    <form name="controls">
     <div>
-        <button onclick="addPlants()">Plant</button>
-        <input type="checkbox" id="pause" oninput="Game.setPause(this)"><label for="pause">Pause</label>
+            <label>
+                <input type="checkbox" name="pause" value="pause" autocomplete="off">
+                Pause
+            </label>
+
+            <fieldset name="mouseAction">
+                <label>
+                    <input type="radio" name="mouseAction" value="select" checked autocomplete="off">
+                    Select
+                </label>
+                <label>
+                    <input type="radio" name="mouseAction" value="plant" autocomplete="off">
+                    Add plant
+                </label>
+            </fieldset>
     </div>
 
     <div class="code-editor">
         <textarea id="code">
-// Editor is not working yet.
-// You can use it to preview the complexity for your plant code.
-// Plants are defined at src/plant-examples.js
-// and created at the end of src/plants.js
+// Editor is working!
+// Try it by clicking "add plant" above
 api.consume("rain", 1);
 api.consume("sun", 2);</textarea>
 
@@ -61,13 +74,16 @@ api.consume("sun", 2);</textarea>
             </dl>
         </div>
 
+        <script src="src/lens.js"></script>
         <script src="src/ui.js"></script>
     </div>
+    </form>
 
     <footer>
         <p>Source code on <a href="https://github.com/maxxk/plants-vs-environment">the Github repository</a>.</p>
         <p>Based on example from <a href="https://github.com/mozdevs/gamedev-js-tiles">MDN Tilemaps Tutorial</a>.</p>
     </footer>
+    
 </div><!-- main wrapper -->
 
 </body>

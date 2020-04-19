@@ -99,17 +99,16 @@ Game.tick = function (elapsed) {
 
     // compute delta time in seconds -- also cap it
     var delta = (elapsed - this._previousElapsed) / 1000.0;
-    if (delta < 0.05) {
-        return;
+    if (delta >= 0.05) {
+        delta = Math.min(delta, 0.25); // maximum delta of 250 ms
+        this._previousElapsed = elapsed;
+
+        this.update(delta);
+        // clear previous frame
+        this.ctx.clearRect(0, 0, 512, 512);
+        this.render();
     }
-
-    delta = Math.min(delta, 0.25); // maximum delta of 250 ms
-    this._previousElapsed = elapsed;
-
-    this.update(delta);
-    // clear previous frame
-    this.ctx.clearRect(0, 0, 512, 512);
-    this.render();
+    this.renderUI();
 }.bind(Game);
 
 // override these methods to create the demo

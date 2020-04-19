@@ -29,3 +29,10 @@ header, footer {
 li, p {
     line-height: 1.25em;
 }
+
+fieldset {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+    border: none;
+}

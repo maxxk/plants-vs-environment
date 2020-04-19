@@ -3,7 +3,7 @@
 const UI = {
     dirty: true,
     mouseInside: false,
-    mouseState: undefined,
+    mouseAction: undefined,
     /** @type {Vector?} */
     mousePosition: undefined,
 
@@ -13,7 +13,7 @@ const UI = {
         const context = layer.getContext('2d');
         context.clearRect(0, 0, WIDTH, HEIGHT);
         if (this.mouseInside && this.mousePosition) {
-            if (this.mouseState === 'plant') {
+            if (this.mouseAction === 'plant') {
                 /** @type {HTMLImageElement} */
                 const image = Loader.getImage("generic-plant");
                 context.drawImage(image,

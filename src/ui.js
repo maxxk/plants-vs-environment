@@ -45,7 +45,7 @@ document.getElementsByName("mouseAction").forEach(element => {
     element.addEventListener("input", () => 
     ViewModel.lens("mouseAction").set(document.forms.controls.mouseAction.value));
 })
-ViewModel.lens("mouseAction").on(mouseAction => { UI.mouseState = mouseAction });
+ViewModel.lens("mouseAction").on(mouseAction => { UI.mouseAction = mouseAction });
 ViewModel.lens("mouseAction").on(mouseAction => {
     document.forms.controls.mouseAction.value = mouseAction;
 })
@@ -69,7 +69,7 @@ mainCanvas.addEventListener("mouseleave", function() { UI.mouseInside = false; }
 mainCanvas.addEventListener("mousemove", function(event) { UI.setMousePosition(mainCanvas, event) });
 mainCanvas.addEventListener("click", function(event) {
     if (UI.mouseInside && UI.mousePosition) {
-        if (UI.mouseState === "plant") {
+        if (UI.mouseAction === "plant") {
             addResource(map, Plant(vectorAdd(vectorAdd(UI.mousePosition, Game.camera), { x: -map.tsize/2, y: -map.tsize/2 }), makeProgram(new Function(ARGUMENTS, editor.getDoc().getValue())), {}, {}, map));
         }
     }

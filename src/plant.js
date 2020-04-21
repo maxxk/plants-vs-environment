@@ -149,6 +149,7 @@ function addPlants(){
     //addResource(map, Plant({ x: 448, y: 448 }, makeProgram(Roots), {}, { root: true }, map));
     addResource(map, Plant({ x: 384, y: 432 }, makeProgram(Eater), {}, {}, map));
     addResource(map, Plant({ x: 320, y: 432 }, makeProgram(RootsLeaves), {}, {}, map));
+    Game.render("force");
 };
 
 setTimeout(addPlants, 2000);

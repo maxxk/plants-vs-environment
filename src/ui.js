@@ -39,11 +39,12 @@ ViewModel.lens("code").on(code => {
 editor.on("changes", throttle(cm => ViewModel.lens("code").set(cm.getDoc().getValue()), 500));
 ViewModel.lens("complexity").on(complexity => {
     if (!isNaN(complexity)) {
-        document.getElementById("code-status").innerText = `Code complexity: ${complexity}`;
+        document.getElementById("code-status").innerText = `complexity: ${complexity}`;
+        document.getElementById("code-error").innerText = "";
+         
     } else {
-        document.getElementById("code-status").innerHTML = `Error: <pre>
-${complexity}
-        </pre>`
+        document.getElementById("code-status").innerText = "error (see below)";
+        document.getElementById("code-error").innerText = complexity;
     }
 });
 ViewModel.lens("complexity").on(complexity => { ViewModel.lens("codeError").set(isNaN(complexity)) });
@@ -101,6 +102,9 @@ mainCanvas.addEventListener("click", function(event) {
     if (UI.mouseInside && UI.mousePosition) {
         if (UI.mouseAction === "plant") {
             addResource(map, Plant(vectorAdd(vectorAdd(UI.mousePosition, Game.camera), { x: -map.tsize/2, y: -map.tsize/2 }), makeProgram(new Function(ARGUMENTS, editor.getDoc().getValue())), {}, {}, map));
+            Game.render("force");
         }
     }
 })
+
+ViewModel.lens("pause").set(pause.checked);

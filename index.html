@@ -24,82 +24,100 @@
     <script src="src/game.js"></script>
 </head>
 <body>
-
-<header>
-    <p>Plants simulator</p>
-</header>
-
-<div class="main-wrapper">
-    <canvas id="demo" width="512" height="512"></canvas>
-
+<div class="flex item-start">
+    <div class="canvas v-top bb bl b-black ph3 mr3">
     <form name="controls">
-    <div>
+        <input type="checkbox" class="hide-control" name="hide-canvas" id="hide-canvas" />
+        <label class="header db mb3 bb pb1" for="hide-canvas">
+            Main window
+
             <label>
-                <input type="checkbox" name="pause" value="pause" autocomplete="off">
+                <input type="checkbox" name="pause" value="pause">
                 Pause
             </label>
-
+            <div class="fr">
+                <strong>Plants vs Environment</strong>
+            </div>
+        </label>
+        <main class="hide-target db center mb3" style="width: 512px">
+            <canvas class="center mb3" id="demo" width="512" height="512"></canvas>
             <fieldset name="mouseAction">
                 <label>
                     <input type="radio" name="mouseAction" value="select" checked autocomplete="off">
-                    Select
+                    Do nothing
                 </label>
                 <label>
                     <input type="radio" name="mouseAction" value="plant" autocomplete="off">
                     Add plant
                 </label>
             </fieldset>
-    </div>
+        </main>
     </form>
+    </div>
 
-    <form name="codeEditor">
-    <div class="code-editor">
-        <textarea id="code">
-// Editor is working!
-// Try it by clicking "add plant" above
-// To see more examples click on "Load" checkbox below
-api.consume("rain", 1);
-api.consume("sun", 2);</textarea>
 
-        <div id="code-status"></div>
+    <div class="flex-auto flex flex-column">
+        <div class="v-top bb bl b-black ph3 flex-auto relative" style="min-height: 10rem;">
+            <input type="checkbox" class="hide-control" name="hide-editor" id="hide-editor" />
+            <label class="header db mb3 bb pb1" for="hide-editor">
+                Code
 
-        <div>
-            Defined variables: static, data, delta, api
-            <dl>
-                <dt>static</dt>
-                <dd>static plant data copy: structure, water, enertgy</dd>
-                <dt>data</dt>
-                <dd>user-state</dd>
-                <dt>delta</dt>
-                <dd>time since last update</dd>
-                <dt>api</dt>
-                <dd>external functions</dd>
-            </dl>
+                <div id="code-status" class="dib fr"></div>
+            </label>
+            <main class="hide-target" style="min-height: 10rem">
+                <textarea id="code">
+    // Editor is working!
+    // Try it by clicking "add plant" above
+    // To see more examples click on "Load" checkbox below
+    api.consume("rain", 1);
+    api.consume("sun", 2);</textarea>
+            </main>
+            <pre id="code-error">
+
+            </pre>
         </div>
 
-        <div>
-            <input type="checkbox" class="hide-control" id="showLoadDialog" autocomplete="off">
-            <label for="showLoadDialog">
+        <div class="v-top bb bl b-black ph3">
+            <form name="codeEditor" class="di">
+            <input type="checkbox" class="hide-control" id="hideLoadDialog" checked>
+            <label class="header dib mb3 bb pb1 ph3" for="hideLoadDialog">
                 Load
             </label>
-            <div class="hide-target db">
-                <select name="loadName" size=4>
+        
+            <div class="hide-target">
+                <select name="loadName" size=4 class="db w-100 mb3">
                 </select>
-                <input type="button" name="load" value="Load" />
+                <input type="button" name="load" value="Load" class="db mb3" />
+            </div>
+            </form>
+
+            <input type="checkbox" class="hide-control" id="hideReference" checked>
+            <label class="header dib mb3 bb pb1 ph3" for="hideReference">
+                Reference
+            </label>
+            <div class="hide-target">
+                Defined variables: static, data, delta, api
+                <dl>
+                    <dt>static</dt>
+                    <dd>static plant data copy: structure, water, enertgy</dd>
+                    <dt>data</dt>
+                    <dd>user-state</dd>
+                    <dt>delta</dt>
+                    <dd>time since last update</dd>
+                    <dt>api</dt>
+                    <dd>external functions</dd>
+                </dl>
             </div>
         </div>
-
-        <script src="src/lens.js"></script>
-        <script src="src/ui.js"></script>
     </div>
-    </form>
+</div>
 
-    <footer>
-        <p>Source code on <a href="https://github.com/maxxk/plants-vs-environment">the Github repository</a>.</p>
-        <p>Based on example from <a href="https://github.com/mozdevs/gamedev-js-tiles">MDN Tilemaps Tutorial</a>.</p>
-    </footer>
-    
-</div><!-- main wrapper -->
+<footer>
+    <div class="dib">Source code on <a href="https://github.com/maxxk/plants-vs-environment">the Github repository</a>.</div>
+    <div class="dib fr">Based on example from <a href="https://github.com/mozdevs/gamedev-js-tiles">MDN Tilemaps Tutorial</a>.</div>
+</footer>
 
+<script src="src/lens.js"></script>
+<script src="src/ui.js"></script>
 </body>
 </html>
